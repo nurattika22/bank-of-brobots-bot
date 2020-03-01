@@ -1,12 +1,12 @@
 import logging
+import os
 
 import requests
 import tinydb
 import telebot
 from telebot import types
 
-import os
-
+import queries
 from config import config
 from services import *
 
@@ -31,7 +31,7 @@ def start_menu(message: types.Message):
     u = message.chat
     user_str = generate_user_str(u)
 
-    if not db.search(user_query.name == user_str):
+    if not db.search(user_query.telegram_id == u.id):
         kb = yesno_keyboard(config, 'register')
         bot.reply_to(message, config['BOT']['START_REGISTER'], reply_markup=kb)
 
@@ -39,6 +39,25 @@ def start_menu(message: types.Message):
         bot.send_message(u.id, config['BOT']['START'])
 
     logging.info('/start from %s:%s', u.id, user_str)
+
+
+@bot.message_handler(commands=['me'])
+def profile(message: types.Message):
+    u = message.chat
+    user_str = generate_user_str(u)
+    user = db.search(user_query.telegram_id == u.id)[0]
+
+    if not user:
+        bot.send_message(u.id, config['BOT']['NOT_USER'])
+
+    r = graphql_request(
+        queries.profile.format(user['db_id']),
+        user['token'],
+        config['API_ADDR'])
+
+    bot.send_message(u.id, generate_profile(r['user']), parse_mode='Markdown')
+
+    logging.info('/me from %s:%s', u.id, user_str)
 
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -54,8 +73,8 @@ def inline_button(callback: types.CallbackQuery):
             'telegram_id': u.id
         }
 
-        requests.post(config['API_ADDR'] + '/register', data=user)
-        db.insert({'name': user_str, 'telegram_id': u.id})
+        r = requests.post(config['API_ADDR'] + '/register', data=user).json()
+        db.insert({'name': user_str, 'telegram_id': u.id, 'db_id': r['_id']})
         login(db, user_query, config, u.id)
 
         bot.edit_message_text(

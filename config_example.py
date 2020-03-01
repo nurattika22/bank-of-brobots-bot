@@ -13,13 +13,13 @@ config = {
     'BOT': {
         'TOKEN': 'your_token',
 
-        'START': 'Welcome back!',
+        'START': 'Welcome back!\n\nTry /me to see your profile',
 
         'START_REGISTER': 'Welcome to Bank of Brobots!\nWould you like to register?',
         'SUCCESS_REG': 'Welcome to Bank of Brobots!\nRegistration completed successfully!',
         'CANCEL_REG': 'Welcome to Bank of Brobots!\nRegistration is cancelled!',
 
-        'SUCCESS': 'Alright!',
+        'NOT_USER': 'You\'re not registered. Use /start first',
 
         'KEYBOARDS': {
             'YES': 'Yes',

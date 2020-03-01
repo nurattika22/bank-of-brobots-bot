@@ -21,6 +21,12 @@ config = {
 
         'NOT_USER': 'You\'re not registered. Use /start first',
 
+        'SUCCESS': 'Done!',
+        'FAILURE': 'Sorry, something went wrong!',
+
+        'REMOVE_ACCOUNT': 'Choose an account that will be removed:',
+        'SUCCESS_REMOVE': 'Successfully removed chosen account!',
+
         'KEYBOARDS': {
             'YES': 'Yes',
             'NO': 'No'

@@ -60,9 +60,66 @@ def profile(message: types.Message):
     logging.info('/me from %s:%s', u.id, user_str)
 
 
+@bot.message_handler(commands=['new_account'])
+def create_account(message: types.Message):
+    u = message.chat
+    user_str = generate_user_str(u)
+    user = db.search(user_query.telegram_id == u.id)[0]
+
+    args = extract_args(message.text)
+
+    if not user:
+        bot.send_message(u.id, config['BOT']['NOT_USER'])
+
+    r = graphql_request(
+        queries.create_account.format(' '.join(args) if args else ''),
+        user['token'],
+        config['API_ADDR'])
+
+    bot.send_message(u.id, config['BOT']['SUCCESS'])
+
+    logging.info('/new_account from %s:%s', u.id, user_str)
+
+
+@bot.message_handler(commands=['remove_account'])
+def remove_account(message: types.Message):
+    u = message.chat
+    user_str = generate_user_str(u)
+    user = db.search(user_query.telegram_id == u.id)[0]
+
+    if not user:
+        bot.send_message(u.id, config['BOT']['NOT_USER'])
+
+    user_data = graphql_request(
+        queries.profile.format(user['db_id']),
+        user['token'],
+        config['API_ADDR'])['user']
+
+    kb = types.InlineKeyboardMarkup()
+
+    if not len(user_data['accounts']):
+        bot.send_message(u.id)
+        return
+
+    for account in user_data['accounts']:
+        if not account['customName']:
+            account['customName'] = 'Untitled'
+
+        kb.add(
+            types.InlineKeyboardButton(
+                '{customName} - {money} bc\n'.format(**account),
+                callback_data='remove_account:{}'.format(account['id']))
+        )
+
+    bot.send_message(u.id, config['BOT']['REMOVE_ACCOUNT'], reply_markup=kb)
+
+    logging.info('/remove_account from %s:%s', u.id, user_str)
+
+
 @bot.callback_query_handler(func=lambda call: True)
 def inline_button(callback: types.CallbackQuery):
     u = callback.message.chat
+    user = db.search(user_query.telegram_id == u.id)[0]
     user_str = generate_user_str(u)
 
     title, val = callback.data.split(':')
@@ -85,6 +142,16 @@ def inline_button(callback: types.CallbackQuery):
     if title == 'register' and val == '0':
         bot.edit_message_text(
             config['BOT']['CANCEL_REG'],
+            u.id,
+            callback.message.message_id)
+
+    if title == 'remove_account' and val:
+        r = graphql_request(queries.remove_account.format(val),
+                            user['token'],
+                            config['API_ADDR'])
+
+        bot.edit_message_text(
+            config['BOT']['SUCCESS_REMOVE'],
             u.id,
             callback.message.message_id)
 

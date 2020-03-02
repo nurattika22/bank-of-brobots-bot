@@ -111,6 +111,7 @@ def inline_button(callback: types.CallbackQuery):
 
     if title == 'receive_money' and val:
         if val[1] == user['db_id']:
+            bot.answer_callback_query(callback.id, 'You can\'t do that!')
             return
 
         r = db.search(user_query.db_id == val[1])[0]
@@ -133,6 +134,8 @@ def inline_button(callback: types.CallbackQuery):
 
     if title == 'give_money' and val:
         if val[1] == user['db_id']:
+            bot.answer_callback_query(
+                callback.id, 'You can\'t do that!')
             return
 
         r = db.search(user_query.db_id == val[1])[0]
@@ -167,7 +170,8 @@ def empty_query(query: types.InlineQuery):
         title='Enter amount of brocoins',
         description='and choose one of operations above',
         input_message_content=types.InputTextMessageContent(
-            message_text='Amount of brocoins wasn\'t entered!')
+            message_text='Amount of brocoins wasn\'t entered!'),
+        thumb_url='https://i.imgur.com/saDPT92.png'
     )
     bot.answer_inline_query(query.id, [r])
 
@@ -196,7 +200,8 @@ def empty_query(query: types.InlineQuery):
         description='',
         input_message_content=types.InputTextMessageContent(
             message_text='Get your {} brocoins!'.format(num)),
-        reply_markup=give_kb
+        reply_markup=give_kb,
+        thumb_url='https://i.imgur.com/f2f4fJu.png'
     )
 
     ask_kb = types.InlineKeyboardMarkup()
@@ -211,7 +216,8 @@ def empty_query(query: types.InlineQuery):
         description='',
         input_message_content=types.InputTextMessageContent(
             message_text='Send me {} brocoins!'.format(num)),
-        reply_markup=ask_kb
+        reply_markup=ask_kb,
+        thumb_url='https://i.imgur.com/XYDwkVZ.png'
     )
     bot.answer_inline_query(query.id, [give, ask])
 

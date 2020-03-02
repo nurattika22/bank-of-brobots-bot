@@ -131,6 +131,28 @@ def inline_button(callback: types.CallbackQuery):
                 inline_message_id=callback.inline_message_id
             )
 
+    if title == 'give_money' and val:
+        if val[1] == user['db_id']:
+            return
+
+        r = db.search(user_query.db_id == val[1])[0]
+
+        r = graphql_request(
+            db, user_query, config['API_ADDR'], user['telegram_id'],
+            queries.transfer.format(val[0], user['db_id'], val[1]))
+
+        if r.get('errors', None):
+            bot.edit_message_text(
+                r['errors'][0]['message'],
+                inline_message_id=callback.inline_message_id
+            )
+
+        else:
+            bot.edit_message_text(
+                config['BOT']['SUCCESS'],
+                inline_message_id=callback.inline_message_id
+            )
+
     if title == 'cancel_request':
         bot.edit_message_text(
             config['BOT']['CANCEL_TRANSFER'],
@@ -176,7 +198,22 @@ def empty_query(query: types.InlineQuery):
             message_text='Get your {} brocoins!'.format(num)),
         reply_markup=give_kb
     )
-    bot.answer_inline_query(query.id, [give])
+
+    ask_kb = types.InlineKeyboardMarkup()
+    ask_kb.row(
+        types.InlineKeyboardButton(
+            'Give', callback_data='give_money:{}:{}'.format(num, user['db_id'])),
+        types.InlineKeyboardButton('Cancel', callback_data='cancel_request')
+    )
+    ask = types.InlineQueryResultArticle(
+        id='2',
+        title='Request {} brocoins'.format(num),
+        description='',
+        input_message_content=types.InputTextMessageContent(
+            message_text='Send me {} brocoins!'.format(num)),
+        reply_markup=ask_kb
+    )
+    bot.answer_inline_query(query.id, [give, ask])
 
 
 if __name__ == '__main__':

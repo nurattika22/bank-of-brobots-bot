@@ -1,8 +1,8 @@
 import requests
 
 
-def login(db, user_query, config, id):
-    r = requests.post(config['API_ADDR'] + '/login', data={'telegram_id': id})
+def login(db, user_query, url, id):
+    r = requests.post(url + '/login', data={'telegram_id': id})
 
     token = r.json()['token']
 

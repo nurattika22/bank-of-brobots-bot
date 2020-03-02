@@ -1,4 +1,5 @@
 from services.extract_args import extract_args
+from services.find_by_telegram_id import find_by_telegram_id
 from services.generate_profile import generate_profile
 from services.generate_user_str import generate_user_str
 from services.graphql_request import graphql_request

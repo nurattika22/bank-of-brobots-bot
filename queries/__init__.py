@@ -1,26 +1,27 @@
 profile = '''query {{
     user(id: "{0}") {{
         name
+        money
         planName
         planCost
         weekLeft
         weekLimit
-        accounts {{
+        isAdmin
+        transactions {{
             id
-            customName
             money
+            fromUser {{
+                name
+            }}
+            toUser {{
+                name
+            }}
         }}
     }}
 }}'''
 
-create_account = '''mutation {{
-    createAccount(customName: "{0}") {{
+transfer = '''mutation {{
+    transfer(money: {}, from_user_id: "{}", to_user_id: "{}") {{
         id
     }}
-}}
-'''
-
-remove_account = '''mutation {{
-    removeAccount(accountId: "{0}")
-}}
-'''
+}}'''

@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 
 import requests
 import tinydb
@@ -31,7 +32,7 @@ def start_menu(message: types.Message):
     u = message.chat
     user_str = generate_user_str(u)
 
-    if not db.search(user_query.telegram_id == u.id):
+    if not find_by_telegram_id(db, user_query, u.id):
         kb = yesno_keyboard(config, 'register')
         bot.reply_to(message, config['BOT']['START_REGISTER'], reply_markup=kb)
 
@@ -44,87 +45,50 @@ def start_menu(message: types.Message):
 @bot.message_handler(commands=['me'])
 def profile(message: types.Message):
     u = message.chat
+    user = find_by_telegram_id(db, user_query, u.id)
     user_str = generate_user_str(u)
-    user = db.search(user_query.telegram_id == u.id)[0]
 
     if not user:
         bot.send_message(u.id, config['BOT']['NOT_USER'])
 
     r = graphql_request(
-        queries.profile.format(user['db_id']),
-        user['token'],
-        config['API_ADDR'])
+        db, user_query, config['API_ADDR'], u.id,
+        queries.profile.format(user['db_id']))
 
-    bot.send_message(u.id, generate_profile(r['user']), parse_mode='Markdown')
+    bot.send_message(u.id, generate_profile(
+        r['data']['user']), parse_mode='Markdown')
 
     logging.info('/me from %s:%s', u.id, user_str)
 
 
-@bot.message_handler(commands=['new_account'])
-def create_account(message: types.Message):
+@bot.message_handler(commands=['my_transactions'])
+def transactions(message: types.Message):
     u = message.chat
+    user = find_by_telegram_id(db, user_query, u.id)
     user_str = generate_user_str(u)
-    user = db.search(user_query.telegram_id == u.id)[0]
+    base = 'Transactions:\n'
 
-    args = extract_args(message.text)
+    r = graphql_request(db, user_query, config['API_ADDR'],
+                        u.id, queries.profile.format(user['db_id']))
+    transactions = r['data']['user']['transactions']
 
-    if not user:
-        bot.send_message(u.id, config['BOT']['NOT_USER'])
+    for t in transactions:
+        base += ' - *{}* sent {} brocoins to *{}*\n'.format(
+            t['fromUser']['name'], t['money'], t['toUser']['name'])
 
-    r = graphql_request(
-        queries.create_account.format(' '.join(args) if args else ''),
-        user['token'],
-        config['API_ADDR'])
-
-    bot.send_message(u.id, config['BOT']['SUCCESS'])
-
-    logging.info('/new_account from %s:%s', u.id, user_str)
-
-
-@bot.message_handler(commands=['remove_account'])
-def remove_account(message: types.Message):
-    u = message.chat
-    user_str = generate_user_str(u)
-    user = db.search(user_query.telegram_id == u.id)[0]
-
-    if not user:
-        bot.send_message(u.id, config['BOT']['NOT_USER'])
-
-    user_data = graphql_request(
-        queries.profile.format(user['db_id']),
-        user['token'],
-        config['API_ADDR'])['user']
-
-    kb = types.InlineKeyboardMarkup()
-
-    if not len(user_data['accounts']):
-        bot.send_message(u.id)
-        return
-
-    for account in user_data['accounts']:
-        if not account['customName']:
-            account['customName'] = 'Untitled'
-
-        kb.add(
-            types.InlineKeyboardButton(
-                '{customName} - {money} bc\n'.format(**account),
-                callback_data='remove_account:{}'.format(account['id']))
-        )
-
-    bot.send_message(u.id, config['BOT']['REMOVE_ACCOUNT'], reply_markup=kb)
-
-    logging.info('/remove_account from %s:%s', u.id, user_str)
+    bot.send_message(u.id, base, parse_mode='Markdown')
 
 
 @bot.callback_query_handler(func=lambda call: True)
 def inline_button(callback: types.CallbackQuery):
-    u = callback.message.chat
-    user = db.search(user_query.telegram_id == u.id)[0]
+    u = callback.from_user
+    user = find_by_telegram_id(db, user_query, u.id)
     user_str = generate_user_str(u)
 
-    title, val = callback.data.split(':')
+    title = callback.data.split(':')[0]
+    val = callback.data.split(':')[1:]
 
-    if title == 'register' and val == '1':
+    if title == 'register' and val[0] == '1':
         user = {
             'name': user_str,
             'telegram_id': u.id
@@ -132,28 +96,87 @@ def inline_button(callback: types.CallbackQuery):
 
         r = requests.post(config['API_ADDR'] + '/register', data=user).json()
         db.insert({'name': user_str, 'telegram_id': u.id, 'db_id': r['_id']})
-        login(db, user_query, config, u.id)
+        login(db, user_query, config['API_ADDR'], u.id)
 
         bot.edit_message_text(
             config['BOT']['SUCCESS_REG'],
             u.id,
             callback.message.message_id)
 
-    if title == 'register' and val == '0':
+    if title == 'register' and val[0] == '0':
         bot.edit_message_text(
             config['BOT']['CANCEL_REG'],
             u.id,
             callback.message.message_id)
 
-    if title == 'remove_account' and val:
-        r = graphql_request(queries.remove_account.format(val),
-                            user['token'],
-                            config['API_ADDR'])
+    if title == 'receive_money' and val:
+        if val[1] == user['db_id']:
+            return
 
+        r = db.search(user_query.db_id == val[1])[0]
+
+        r = graphql_request(
+            db, user_query, config['API_ADDR'], r['telegram_id'],
+            queries.transfer.format(val[0], val[1], user['db_id']))
+
+        if r.get('errors', None):
+            bot.edit_message_text(
+                r['errors'][0]['message'],
+                inline_message_id=callback.inline_message_id
+            )
+
+        else:
+            bot.edit_message_text(
+                config['BOT']['SUCCESS'],
+                inline_message_id=callback.inline_message_id
+            )
+
+    if title == 'cancel_request':
         bot.edit_message_text(
-            config['BOT']['SUCCESS_REMOVE'],
-            u.id,
-            callback.message.message_id)
+            config['BOT']['CANCEL_TRANSFER'],
+            inline_message_id=callback.inline_message_id
+        )
+
+
+@bot.inline_handler(func=lambda query: len(query.query) is 0)
+def empty_query(query: types.InlineQuery):
+    r = types.InlineQueryResultArticle(
+        id='1',
+        title='Enter amount of brocoins',
+        description='and choose one of operations above',
+        input_message_content=types.InputTextMessageContent(
+            message_text='Amount of brocoins wasn\'t entered!')
+    )
+    bot.answer_inline_query(query.id, [r])
+
+
+@bot.inline_handler(func=lambda query: len(query.query))
+def empty_query(query: types.InlineQuery):
+    u = query.from_user
+    user = find_by_telegram_id(db, user_query, u.id)
+    user_str = generate_user_str(u)
+
+    try:
+        matches = re.match(r'\d+', query.query)
+        num = matches.group()
+    except AttributeError as ex:
+        return
+
+    give_kb = types.InlineKeyboardMarkup()
+    give_kb.row(
+        types.InlineKeyboardButton(
+            'Receive', callback_data='receive_money:{}:{}'.format(num, user['db_id'])),
+        types.InlineKeyboardButton('Cancel', callback_data='cancel_request')
+    )
+    give = types.InlineQueryResultArticle(
+        id='1',
+        title='Send {} brocoins'.format(num),
+        description='',
+        input_message_content=types.InputTextMessageContent(
+            message_text='Get your {} brocoins!'.format(num)),
+        reply_markup=give_kb
+    )
+    bot.answer_inline_query(query.id, [give])
 
 
 if __name__ == '__main__':

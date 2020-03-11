@@ -42,6 +42,15 @@ def start_menu(message: types.Message):
     logging.info('/start from %s:%s', u.id, user_str)
 
 
+@bot.message_handler(commands=['help'])
+def help_menu(message: types.Message):
+    u = message.chat
+    user_str = generate_user_str(u)
+
+    bot.send_message(u.id, config['BOT']['HELP'])
+    logging.info('/help from %s:%s', u.id, user_str)
+
+
 @bot.message_handler(commands=['me'])
 def profile(message: types.Message):
     u = message.chat
@@ -65,12 +74,14 @@ def profile(message: types.Message):
 def transactions(message: types.Message):
     u = message.chat
     user = find_by_telegram_id(db, user_query, u.id)
-    user_str = generate_user_str(u)
     base = 'Transactions:\n'
 
     r = graphql_request(db, user_query, config['API_ADDR'],
                         u.id, queries.profile.format(user['db_id']))
     transactions = r['data']['user']['transactions']
+
+    if not transactions:
+        base += 'Empty...'
 
     for t in transactions:
         base += ' - *{}* sent {} brocoins to *{}*\n'.format(
@@ -177,15 +188,14 @@ def empty_query(query: types.InlineQuery):
 
 
 @bot.inline_handler(func=lambda query: len(query.query))
-def empty_query(query: types.InlineQuery):
+def answer_query(query: types.InlineQuery):
     u = query.from_user
     user = find_by_telegram_id(db, user_query, u.id)
-    user_str = generate_user_str(u)
 
     try:
         matches = re.match(r'\d+', query.query)
         num = matches.group()
-    except AttributeError as ex:
+    except AttributeError:
         return
 
     give_kb = types.InlineKeyboardMarkup()

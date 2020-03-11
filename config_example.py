@@ -30,6 +30,14 @@ config = {
         'KEYBOARDS': {
             'YES': 'Yes',
             'NO': 'No'
-        }
+        },
+        'HELP': '''Hi! You can use these commands:
+
+/me - see your profile
+
+/my_transactions - see list of your transactions
+
+To transfer money type @brobank_bot in chat with your friend and follow instructions there. Good luck!
+'''
     }
 }

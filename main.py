@@ -59,6 +59,7 @@ def profile(message: types.Message):
 
     if not user:
         bot.send_message(u.id, config['BOT']['NOT_USER'])
+        return
 
     r = graphql_request(
         db, user_query, config['API_ADDR'], u.id,
@@ -75,6 +76,10 @@ def transactions(message: types.Message):
     u = message.chat
     user = find_by_telegram_id(db, user_query, u.id)
     base = 'Transactions:\n'
+
+    if not user:
+        bot.send_message(u.id, config['BOT']['NOT_USER'])
+        return
 
     r = graphql_request(db, user_query, config['API_ADDR'],
                         u.id, queries.profile.format(user['db_id']))
@@ -95,6 +100,9 @@ def inline_button(callback: types.CallbackQuery):
     u = callback.from_user
     user = find_by_telegram_id(db, user_query, u.id)
     user_str = generate_user_str(u)
+
+    if not user:
+        return
 
     title = callback.data.split(':')[0]
     val = callback.data.split(':')[1:]
@@ -191,6 +199,9 @@ def empty_query(query: types.InlineQuery):
 def answer_query(query: types.InlineQuery):
     u = query.from_user
     user = find_by_telegram_id(db, user_query, u.id)
+
+    if not user:
+        return
 
     try:
         matches = re.match(r'\d+', query.query)

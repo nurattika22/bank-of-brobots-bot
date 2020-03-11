@@ -45,7 +45,12 @@ def start_menu(message: types.Message):
 @bot.message_handler(commands=['help'])
 def help_menu(message: types.Message):
     u = message.chat
+    user = find_by_telegram_id(db, user_query, u.id)
     user_str = generate_user_str(u)
+
+    if not user:
+        bot.send_message(u.id, config['BOT']['NOT_USER'])
+        return
 
     bot.send_message(u.id, config['BOT']['HELP'])
     logging.info('/help from %s:%s', u.id, user_str)

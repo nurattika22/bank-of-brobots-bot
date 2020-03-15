@@ -100,6 +100,44 @@ def transactions(message: types.Message):
     bot.send_message(u.id, base, parse_mode='Markdown')
 
 
+@bot.message_handler(commands=['change_subscription', 'change_subs'])
+def change_subsription(message: types.Message):
+    u = message.chat
+    user = find_by_telegram_id(db, user_query, u.id)
+
+    if not user:
+        bot.send_message(u.id, config['BOT']['NOT_USER'])
+        return
+
+    r = graphql_request(
+        db, user_query, config['API_ADDR'], u.id,
+        queries.subscriptions)
+
+    subs = types.InlineKeyboardMarkup(row_width=1)
+
+    for sub in r['data']['subscriptions']:
+        if not sub['limit']:
+            sub['limit'] = 'Unlimited'
+
+        subs.row(
+            types.InlineKeyboardButton(
+                text='{name} - {cost} - {limit}'.format(**sub),
+                callback_data='change_sub:{}'.format(sub['id'])
+            )
+        )
+
+    bot.send_message(
+        u.id,
+        'Choose one of these:\n_name_ - _cost_ - _limit_',
+        reply_markup=subs,
+        parse_mode='Markdown')
+
+
+@bot.message_handler(commands=['ping'])
+def ping(message: types.Message):
+    bot.reply_to(message, 'Pong!')
+
+
 @bot.callback_query_handler(func=lambda call: True)
 def inline_button(callback: types.CallbackQuery):
     u = callback.from_user
@@ -129,6 +167,10 @@ def inline_button(callback: types.CallbackQuery):
             config['BOT']['CANCEL_REG'],
             u.id,
             callback.message.message_id)
+
+    if not user:
+        bot.answer_callback_query(callback.id, 'You\'re not registered!')
+        return
 
     if title == 'receive_money' and val:
         if val[1] == user['db_id']:
@@ -182,6 +224,23 @@ def inline_button(callback: types.CallbackQuery):
             config['BOT']['CANCEL_TRANSFER'],
             inline_message_id=callback.inline_message_id
         )
+
+    if title == 'change_sub':
+        r = graphql_request(
+            db, user_query, config['API_ADDR'], user['telegram_id'],
+            queries.change_subscription.format(val[0], user['db_id']))
+
+        if r.get('errors', None):
+            bot.edit_message_text(
+                r['errors'][0]['message'],
+                u.id,
+                callback.message.message_id)
+
+        else:
+            bot.edit_message_text(
+                config['BOT']['SUCCESS'],
+                u.id,
+                callback.message.message_id)
 
 
 @bot.inline_handler(func=lambda query: len(query.query) is 0)

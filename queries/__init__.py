@@ -25,3 +25,18 @@ transfer = '''mutation {{
         id
     }}
 }}'''
+
+subscriptions = '''query {
+    subscriptions {
+        id
+        name
+        cost
+        limit
+    }
+}'''
+
+change_subscription = '''mutation {{
+    changeSubscription(subscriptionId: {}, userId: "{}") {{
+        name
+    }}
+}}'''

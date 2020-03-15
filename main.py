@@ -106,9 +106,6 @@ def inline_button(callback: types.CallbackQuery):
     user = find_by_telegram_id(db, user_query, u.id)
     user_str = generate_user_str(u)
 
-    if not user:
-        return
-
     title = callback.data.split(':')[0]
     val = callback.data.split(':')[1:]
 

@@ -100,6 +100,11 @@ def transactions(message: types.Message):
     bot.send_message(u.id, base, parse_mode='Markdown')
 
 
+@bot.message_handler(commands=['ping'])
+def ping(message: types.Message):
+    bot.reply_to(message, 'Pong!')
+
+
 @bot.callback_query_handler(func=lambda call: True)
 def inline_button(callback: types.CallbackQuery):
     u = callback.from_user
@@ -129,6 +134,10 @@ def inline_button(callback: types.CallbackQuery):
             config['BOT']['CANCEL_REG'],
             u.id,
             callback.message.message_id)
+
+    if not user:
+        bot.answer_callback_query(callback.id, 'You\'re not registered!')
+        return
 
     if title == 'receive_money' and val:
         if val[1] == user['db_id']:

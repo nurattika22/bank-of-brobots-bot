@@ -11,8 +11,8 @@ def graphql_request(db, user_query, url, id, query, need_login=False):
     data = {'query': query}
 
     try:
-        response = requests.post(url, json=data, headers=hed)
-    except Exception as ex:
+        response = requests.post(url, json=data, headers=hed).json()
+    except Exception:
         return graphql_request(db, user_query, url, id, query, True)
 
-    return response.json()
+    return response

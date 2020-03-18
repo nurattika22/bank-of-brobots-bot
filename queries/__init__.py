@@ -21,7 +21,7 @@ profile = '''query {{
 }}'''
 
 transfer = '''mutation {{
-    transfer(money: {}, from_user_id: "{}", to_user_id: "{}") {{
+    transfer(money: {}, from_user_id: "{}", to_user_id: "{}", message: "{}") {{
         id
     }}
 }}'''

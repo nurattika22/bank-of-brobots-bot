@@ -181,7 +181,7 @@ def inline_button(callback: types.CallbackQuery):
 
         r = graphql_request(
             db, user_query, config['API_ADDR'], r['telegram_id'],
-            queries.transfer.format(val[0], val[1], user['db_id']))
+            queries.transfer.format(val[0], val[1], user['db_id'], ''))
 
         if r.get('errors', None):
             bot.edit_message_text(

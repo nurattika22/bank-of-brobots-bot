@@ -16,6 +16,7 @@ profile = '''query {{
             toUser {{
                 name
             }}
+            message
         }}
     }}
 }}'''

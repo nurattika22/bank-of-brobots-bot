@@ -94,8 +94,18 @@ def transactions(message: types.Message):
         base += 'Empty...'
 
     for t in transactions:
-        base += ' - *{}* sent {} brocoins to *{}*\n'.format(
-            t['fromUser']['name'], t['money'], t['toUser']['name'])
+        if not t:
+            continue
+
+        if not t['toUser']:
+            base += ' ~ {} brocoins from *{}*\n'.format(
+                abs(t['money']), t['fromUser']['name'])
+            base += '   _~~ {}_\n'.format(t['message']) if t['message'] else ''
+
+        else:
+            base += ' ~ *{}* sent {} brocoins to *{}*\n'.format(
+                t['fromUser']['name'], t['money'], t['toUser']['name'])
+            base += '   _~~ {}_\n'.format(t['message']) if t['message'] else ''
 
     bot.send_message(u.id, base, parse_mode='Markdown')
 
@@ -181,7 +191,7 @@ def inline_button(callback: types.CallbackQuery):
 
         r = graphql_request(
             db, user_query, config['API_ADDR'], r['telegram_id'],
-            queries.transfer.format(val[0], val[1], user['db_id']))
+            queries.transfer.format(val[0], val[1], user['db_id'], val[2]))
 
         if r.get('errors', None):
             bot.edit_message_text(
@@ -205,7 +215,7 @@ def inline_button(callback: types.CallbackQuery):
 
         r = graphql_request(
             db, user_query, config['API_ADDR'], user['telegram_id'],
-            queries.transfer.format(val[0], user['db_id'], val[1]))
+            queries.transfer.format(val[0], user['db_id'], val[1], val[2]))
 
         if r.get('errors', None):
             bot.edit_message_text(
@@ -265,40 +275,59 @@ def answer_query(query: types.InlineQuery):
         return
 
     try:
-        matches = re.match(r'\d+', query.query)
-        num = matches.group()
+        matches = re.match(r'(\d+)? ?(.*)', query.query)
+        num = matches.groups()[0]
+        message = matches.groups()[1]
     except AttributeError:
         return
 
     give_kb = types.InlineKeyboardMarkup()
     give_kb.row(
         types.InlineKeyboardButton(
-            'Receive', callback_data='receive_money:{}:{}'.format(num, user['db_id'])),
+            'Receive', callback_data='receive_money:{}:{}:{}'.format(num, user['db_id'], message)),
         types.InlineKeyboardButton('Cancel', callback_data='cancel_request')
     )
+
     give = types.InlineQueryResultArticle(
         id='1',
+
         title='Send {} brocoins'.format(num),
-        description='',
+
+        description=('Message: {}'.format(message)
+                     if message else 'No message provided'),
+
         input_message_content=types.InputTextMessageContent(
-            message_text='Get your {} brocoins!'.format(num)),
+            message_text='Get your {} brocoins!'.format(num) +
+            ('\nMessage: _{}_'.format(message) if message else ''),
+            parse_mode='Markdown'),
+
         reply_markup=give_kb,
+
         thumb_url='https://i.imgur.com/f2f4fJu.png'
     )
 
     ask_kb = types.InlineKeyboardMarkup()
     ask_kb.row(
         types.InlineKeyboardButton(
-            'Give', callback_data='give_money:{}:{}'.format(num, user['db_id'])),
+            'Give', callback_data='give_money:{}:{}:{}'.format(num, user['db_id'], message)),
         types.InlineKeyboardButton('Cancel', callback_data='cancel_request')
     )
+
     ask = types.InlineQueryResultArticle(
         id='2',
+
         title='Request {} brocoins'.format(num),
-        description='',
+
+        description=('Message: {}'.format(message)
+                     if message else 'No message provided'),
+
         input_message_content=types.InputTextMessageContent(
-            message_text='Send me {} brocoins!'.format(num)),
+            message_text='Send me {} brocoins!'.format(num) +
+            ('\nMessage: _{}_'.format(message) if message else ''),
+            parse_mode='Markdown'),
+
         reply_markup=ask_kb,
+
         thumb_url='https://i.imgur.com/XYDwkVZ.png'
     )
     bot.answer_inline_query(query.id, [give, ask])

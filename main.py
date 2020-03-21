@@ -281,6 +281,10 @@ def answer_query(query: types.InlineQuery):
     except AttributeError:
         return
 
+    if not num:
+        empty_query(query)
+        return
+
     give_kb = types.InlineKeyboardMarkup()
     give_kb.row(
         types.InlineKeyboardButton(

@@ -80,6 +80,8 @@ def profile(message: types.Message):
 def transactions(message: types.Message):
     u = message.chat
     user = find_by_telegram_id(db, user_query, u.id)
+    user_str = generate_user_str(u)
+
     base = 'Transactions:\n'
 
     if not user:
@@ -108,11 +110,14 @@ def transactions(message: types.Message):
             base += '   _~~ {}_\n'.format(t['message']) if t['message'] else ''
 
     bot.send_message(u.id, base, parse_mode='Markdown')
+    logging.info('/my_transactions from %s:%s', u.id, user_str)
 
 
 @bot.message_handler(commands=['change_subscription', 'change_subs'])
 def change_subsription(message: types.Message):
     u = message.chat
+    user_str = generate_user_str(u)
+
     user = find_by_telegram_id(db, user_query, u.id)
 
     if not user:
@@ -141,11 +146,15 @@ def change_subsription(message: types.Message):
         'Choose one of these:\n_name_ - _cost_ - _limit_',
         reply_markup=subs,
         parse_mode='Markdown')
+    logging.info('/change_subscription from %s:%s', u.id, user_str)
 
 
 @bot.message_handler(commands=['ping'])
 def ping(message: types.Message):
+    u = message.chat
+    user_str = generate_user_str(u)
     bot.reply_to(message, 'Pong!')
+    logging.info('/ping from %s:%s', u.id, user_str)
 
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -156,6 +165,9 @@ def inline_button(callback: types.CallbackQuery):
 
     title = callback.data.split(':')[0]
     val = callback.data.split(':')[1:]
+
+    logging.info('Callback data "%s" from %s:%s',
+                 callback.data, u.id, user_str)
 
     if title == 'register' and val[0] == '1':
         user = {
@@ -255,6 +267,11 @@ def inline_button(callback: types.CallbackQuery):
 
 @bot.inline_handler(func=lambda query: len(query.query) is 0)
 def empty_query(query: types.InlineQuery):
+    u = query.from_user
+    user_str = generate_user_str(u)
+
+    logging.info('Empty query from %s:%s', u.id, user_str)
+
     r = types.InlineQueryResultArticle(
         id='1',
         title='Enter amount of brocoins',
@@ -337,5 +354,8 @@ def answer_query(query: types.InlineQuery):
     bot.answer_inline_query(query.id, [give, ask])
 
 
-if __name__ == '__main__':
-    bot.polling()
+while __name__ == '__main__':
+    try:
+        bot.polling()
+    except Exception as e:
+        logging.warning(e)

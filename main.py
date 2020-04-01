@@ -354,8 +354,9 @@ def answer_query(query: types.InlineQuery):
     bot.answer_inline_query(query.id, [give, ask])
 
 
-while __name__ == '__main__':
-    try:
-        bot.polling()
-    except Exception as e:
-        logging.warning(e)
+if __name__ == '__main__':
+    while True:
+        try:
+            bot.polling(none_stop=True)
+        except Exception as e:
+            logging.warning(e)

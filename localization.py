@@ -2,7 +2,9 @@ localization = {
     'en': {
         'start': 'Hi! This *Bank of #brobots*',
         'help': u'*List of commands:*\n'
-                u'/profile - _your profile_',
+                u'/help - _see list of commands_\n'
+                u'/profile - _your profile_\n'
+                u'/transactions - _list of transactions_\n',
 
         'register': 'Would you like to register?',
         'register_success': 'Successfully registered',
@@ -13,6 +15,10 @@ localization = {
         'transaction_success': 'Success',
         'transaction_failure': 'Something went wrong',
         'transaction_cancel': 'Cancelled',
+
+        'transaction_list_title': '*Transactions*\n',
+        'transaction_list_item': u'- _{} bc_ from _{}_ to _{}_\n'
+                                 u'  - _{}_\n',
 
         'profile': u'*Profile*\n'
                     u'Name: _{name}_\n'
@@ -53,7 +59,8 @@ localization = {
             }
         },
 
-        'cannot': 'You can\'t do that!',
-        'ping': 'Still alive!'
+        'cannot': 'You can\'t do that! ❌',
+        'empty_list': 'List is empty 😟',
+        'ping': 'Still alive! 👍'
     }
 }

@@ -5,6 +5,13 @@ profile = '''query {{
         is_admin
         transactions {{
             id
+        }}
+    }}
+}}'''
+
+transactions = '''query {{
+    user(id: "{}") {{
+        transactions {{
             money
             fromUser {{
                 name

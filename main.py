@@ -7,7 +7,7 @@ from telebot import types
 
 from common import get_user_str, load_config, user_exists, yesno_keyboard
 from localization import localization
-from queries import profile, telegramToUserId, transfer
+from queries import profile, telegramToUserId, transactions, transfer
 from services import graphql_request
 
 load_config()
@@ -76,6 +76,36 @@ def on_profile(message: types.Message):
     bot.send_message(u_id, text_response)
 
 
+@bot.message_handler(commands=['transactions'])
+def on_transactions(message: types.Message):
+    u_id = message.from_user.id
+    api_url = environ.get('API_URL')
+
+    res = graphql_request(api_url,
+                          telegramToUserId.format(u_id),
+                          telegram_id=u_id)
+
+    if res.get('errors', None):
+        bot.reply_to(message, localization['register_first'])
+        return
+
+    internal_id = res['data']['telegramToUserId']
+
+    res = graphql_request(api_url,
+                          transactions.format(internal_id), telegram_id=u_id)['data']['user']
+
+    text_response = localization['transaction_list_title']
+
+    for t in res['transactions']:
+        text_response += localization['transaction_list_item'].format(
+            t['money'], t['fromUser']['name'], t['toUser']['name'], t['message'])
+
+    if not len(t):
+        text_response += localization['empty_list']
+
+    bot.reply_to(message, text_response)
+
+
 @bot.callback_query_handler(func=lambda call: True)
 def on_callback_query(query: types.CallbackQuery):
     u_id = query.from_user.id
@@ -95,9 +125,9 @@ def on_callback_query(query: types.CallbackQuery):
                           '/register', data=user_data).json()
 
             bot.edit_message_text(
-                localization['register'], u_id, query.message.message_id)
+                localization['register_success'], u_id, query.message.message_id)
 
-            bot.send_message(u_id, localization['register_success'])
+            on_help(query.message)
 
         else:
             bot.edit_message_text(

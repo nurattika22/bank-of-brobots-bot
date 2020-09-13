@@ -47,6 +47,11 @@ localization = {
                 'description': '',
                 'message_text': '❌ User is not registered!'
             },
+            'overflow': {
+                'title': '❌ Message is too long!',
+                'description': '',
+                'message_text': '❌ Message is too long!'
+            },
             'give': {
                 'title': 'Send {} brocoins',
                 'description': 'Message: {}',

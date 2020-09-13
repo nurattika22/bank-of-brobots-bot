@@ -240,10 +240,16 @@ def answer_query(query: types.InlineQuery):
         empty_query(query)
         return
 
+    test = len('xxxx;{};{};{}'.format(u_id, num, message).encode('utf-8'))
+
+    if test > 64:
+        on_callback_data_overflow(query)
+        return
+
     give_kb = types.InlineKeyboardMarkup()
     give_kb.row(
         types.InlineKeyboardButton(
-            localization['inline_keyboard']['receive'], callback_data='give_money;{};{};{}'.format(u_id, num, message)),
+            localization['inline_keyboard']['receive'], callback_data='give;{};{};{}'.format(u_id, num, message)),
         types.InlineKeyboardButton(
             localization['inline_keyboard']['cancel'], callback_data='cancel_request')
     )
@@ -267,7 +273,7 @@ def answer_query(query: types.InlineQuery):
     ask_kb = types.InlineKeyboardMarkup()
     ask_kb.row(
         types.InlineKeyboardButton(
-            localization['inline_keyboard']['give'], callback_data='receive_money;{};{};{}'.format(u_id, num, message)),
+            localization['inline_keyboard']['give'], callback_data='recv;{};{};{}'.format(u_id, num, message)),
         types.InlineKeyboardButton(
             localization['inline_keyboard']['cancel'], callback_data='cancel_request')
     )
@@ -297,8 +303,20 @@ def on_inline_not_registered(query: types.InlineQuery):
         title=localization['inline_mode']['not_registered']['title'],
         description=localization['inline_mode']['not_registered']['description'],
         input_message_content=types.InputTextMessageContent(
-            message_text=localization['inline_mode']['not_registered']['message_text']),
-        thumb_url='https://i.imgur.com/saDPT92.png'
+            message_text=localization['inline_mode']['not_registered']['message_text'])
+    )
+
+    bot.answer_inline_query(
+        query.id, [r], cache_time=environ.get('INLINE_QUERY_CACHE_TIME'))
+
+
+def on_callback_data_overflow(query: types.InlineQuery):
+    r = types.InlineQueryResultArticle(
+        id='1',
+        title=localization['inline_mode']['overflow']['title'],
+        description=localization['inline_mode']['overflow']['description'],
+        input_message_content=types.InputTextMessageContent(
+            message_text=localization['inline_mode']['overflow']['message_text'])
     )
 
     bot.answer_inline_query(

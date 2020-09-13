@@ -18,7 +18,7 @@ localization = {
 
         'transaction_list_title': '*Transactions*\n',
         'transaction_list_item': u'- _{} bc_ from _{}_ to _{}_\n'
-                                 u'  - _{}_\n',
+                                 u'     - _{}_\n',
 
         'profile': u'*Profile*\n'
                     u'Name: _{name}_\n'

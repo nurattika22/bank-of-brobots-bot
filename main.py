@@ -1,4 +1,5 @@
 import re
+import time
 from os import environ
 
 import requests
@@ -13,7 +14,7 @@ from services import graphql_request
 load_config()
 localization = localization['en']
 
-bot = telebot.TeleBot(environ.get(
+bot = telebot.AsyncTeleBot(environ.get(
     'TELEGRAM_API_TOKEN_DEV'), parse_mode='MARKDOWN')
 
 
@@ -23,6 +24,7 @@ def on_start(message: types.Message):
 
     bot.reply_to(message, localization['start'])
 
+    bot.send_chat_action(u_id, 'typing')
     exists = user_exists(u_id, environ.get('API_URL'))
 
     if not exists:

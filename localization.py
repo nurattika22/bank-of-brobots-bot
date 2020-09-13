@@ -10,6 +10,10 @@ localization = {
         'register_cancel': 'Registration successfully cancelled',
         'register_first': 'You need to register to use this!',
 
+        'transaction_success': 'Success',
+        'transaction_failure': 'Something went wrong',
+        'transaction_cancel': 'Cancelled',
+
         'profile': u'*Profile*\n'
                     u'Name: _{name}_\n'
                     u'Money: _{money} bc_\n'
@@ -50,7 +54,6 @@ localization = {
         },
 
         'cannot': 'You can\'t do that!',
-        'cancel': 'Cancelled',
         'ping': 'Still alive!'
     }
 }

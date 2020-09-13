@@ -85,7 +85,7 @@ def on_callback_query(query: types.CallbackQuery):
     value = query.data.split(';')[1:]
 
     if title == 'register':
-        if value == '1':
+        if value[0] == '1':
             user_data = {
                 'name': user_str,
                 'telegram_id': u_id
@@ -108,14 +108,60 @@ def on_callback_query(query: types.CallbackQuery):
             bot.answer_callback_query(query.id, localization['cannot'])
             return
 
+        from_user_id = graphql_request(environ.get('API_URL'),
+                                       telegramToUserId.format(value[0]),
+                                       telegram_id=value[0])['data']['telegramToUserId']
+
+        to_user_id = graphql_request(environ.get('API_URL'),
+                                     telegramToUserId.format(u_id),
+                                     telegram_id=u_id)['data']['telegramToUserId']
+
+        res = graphql_request(environ.get('API_URL'), transfer.format(
+            value[1], from_user_id, to_user_id, value[2]), telegram_id=value[0])
+
+        if res.get('errors'):
+            bot.edit_message_text(
+                localization['transaction_failure'],
+                inline_message_id=query.inline_message_id
+            )
+            return
+
+        bot.edit_message_text(
+            localization['transaction_success'],
+            inline_message_id=query.inline_message_id
+        )
+
     elif title == 'receive_money':
         if str(u_id) == value[0]:
             bot.answer_callback_query(query.id, localization['cannot'])
             return
 
+        from_user_id = graphql_request(environ.get('API_URL'),
+                                       telegramToUserId.format(u_id),
+                                       telegram_id=u_id)['data']['telegramToUserId']
+
+        to_user_id = graphql_request(environ.get('API_URL'),
+                                     telegramToUserId.format(value[0]),
+                                     telegram_id=value[0])['data']['telegramToUserId']
+
+        res = graphql_request(environ.get('API_URL'), transfer.format(
+            value[1], from_user_id, to_user_id, value[2]), telegram_id=u_id)
+
+        if res.get('errors'):
+            bot.edit_message_text(
+                localization['transaction_failure'],
+                inline_message_id=query.inline_message_id
+            )
+            return
+
+        bot.edit_message_text(
+            localization['transaction_success'],
+            inline_message_id=query.inline_message_id
+        )
+
     elif title == 'cancel_request':
         bot.edit_message_text(
-            localization['cancel'],
+            localization['transaction_cancel'],
             inline_message_id=query.inline_message_id
         )
 
@@ -167,7 +213,7 @@ def answer_query(query: types.InlineQuery):
     give_kb = types.InlineKeyboardMarkup()
     give_kb.row(
         types.InlineKeyboardButton(
-            localization['inline_keyboard']['receive'], callback_data='give_money;{};{}'.format(u_id, num)),
+            localization['inline_keyboard']['receive'], callback_data='give_money;{};{};{}'.format(u_id, num, message)),
         types.InlineKeyboardButton(
             localization['inline_keyboard']['cancel'], callback_data='cancel_request')
     )
@@ -191,7 +237,7 @@ def answer_query(query: types.InlineQuery):
     ask_kb = types.InlineKeyboardMarkup()
     ask_kb.row(
         types.InlineKeyboardButton(
-            localization['inline_keyboard']['give'], callback_data='receive_money;{};{}'.format(u_id, num)),
+            localization['inline_keyboard']['give'], callback_data='receive_money;{};{};{}'.format(u_id, num, message)),
         types.InlineKeyboardButton(
             localization['inline_keyboard']['cancel'], callback_data='cancel_request')
     )

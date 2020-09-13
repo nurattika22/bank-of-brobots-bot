@@ -14,10 +14,10 @@ transactions = '''query {{
         transactions {{
             money
             fromUser {{
-                name
+                username
             }}
             toUser {{
-                name
+                username
             }}
             message
         }}

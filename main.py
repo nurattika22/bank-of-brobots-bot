@@ -100,9 +100,9 @@ def on_transactions(message: types.Message):
 
     for t in res['transactions']:
         text_response += localization['transaction_list_item'].format(
-            t['money'], t['fromUser']['name'], t['toUser']['name'], t['message'])
+            t['money'], t['fromUser']['username'], t['toUser']['username'], t['message'])
 
-    if not len(t):
+    if not len(res['transactions']):
         text_response += localization['empty_list']
 
     bot.reply_to(message, text_response)
@@ -120,7 +120,8 @@ def on_callback_query(query: types.CallbackQuery):
         if value[0] == '1':
             user_data = {
                 'name': user_str,
-                'telegram_id': u_id
+                'telegram_id': u_id,
+                'username': query.from_user.username
             }
 
             requests.post(environ.get('API_URL') +
@@ -135,7 +136,7 @@ def on_callback_query(query: types.CallbackQuery):
             bot.edit_message_text(
                 localization['register_cancel'], u_id, query.message.message_id)
 
-    elif title == 'give_money':
+    elif title == 'give':
         if str(u_id) == value[0]:
             bot.answer_callback_query(query.id, localization['cannot'])
             return
@@ -163,7 +164,7 @@ def on_callback_query(query: types.CallbackQuery):
             inline_message_id=query.inline_message_id
         )
 
-    elif title == 'receive_money':
+    elif title == 'recv':
         if str(u_id) == value[0]:
             bot.answer_callback_query(query.id, localization['cannot'])
             return

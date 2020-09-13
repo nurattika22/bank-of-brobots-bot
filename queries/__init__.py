@@ -2,7 +2,7 @@ profile = '''query {{
     user(id: "{}") {{
         name
         money
-        isAdmin
+        is_admin
         transactions {{
             id
             money

@@ -14,14 +14,43 @@ localization = {
                     u'Name: _{name}_\n'
                     u'Money: _{money} bc_\n'
                     u'Total transactions: _{transactions}_\n',
-
         'profile_admin': 'Admin: _{}_\n',
 
-        'yn_keyboard': {
+        'inline_keyboard': {
             'yes': 'Yes',
-            'no': 'No'
+            'no': 'No',
+            'cancel': 'Cancel',
+            'receive': 'Receive',
+            'give': 'Give'
         },
 
+        'inline_mode': {
+            'message_text_trans_message': '\nMessage: _{}_',
+            'no_message': 'No message provided',
+            'empty': {
+                'title': '💵 Enter amount of brocoins',
+                'description': 'and choose one of operations above',
+                'message_text': '❌ Amount of brocoins wasn\'t entered!'
+            },
+            'not_registered': {
+                'title': '❌ You\'re not registered!',
+                'description': '',
+                'message_text': '❌ User is not registered!'
+            },
+            'give': {
+                'title': 'Send {} brocoins',
+                'description': 'Message: {}',
+                'message_text': 'Receive your {} brocoins!'
+            },
+            'request': {
+                'title': 'Request {} brocoins',
+                'description': 'Message: {}',
+                'message_text': 'Send me {} brocoins!',
+            }
+        },
+
+        'cannot': 'You can\'t do that!',
+        'cancel': 'Cancelled',
         'ping': 'Still alive!'
     }
 }

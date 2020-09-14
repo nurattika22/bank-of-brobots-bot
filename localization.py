@@ -75,6 +75,11 @@ localization = {
                 'description': '',
                 'message_text': '❌ Integer is too big!'
             },
+            'not_enough': {
+                'title': '❌ Not enough money!',
+                'description': '',
+                'message_text': '❌ Not enough money!'
+            },
             'give': {
                 'title': 'Send {} brocoins',
                 'description': 'Message: {}',

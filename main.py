@@ -224,7 +224,7 @@ def on_callback_query(query: types.CallbackQuery):
                                      telegramToUserId.format(u_id),
                                      telegram_id=u_id)
 
-        if to_user_id.get('errors'):
+        if to_user_id.get('errors', None):
             bot.edit_message_text(
                 localization['register_first'],
                 inline_message_id=query.inline_message_id
@@ -237,11 +237,8 @@ def on_callback_query(query: types.CallbackQuery):
         res = graphql_request(environ.get('API_URL'), transfer.format(
             value[1], from_user_id, to_user_id, value[2]), telegram_id=value[0])
 
-        if res.get('errors'):
-            bot.edit_message_text(
-                res['errors'][0]['message'],
-                inline_message_id=query.inline_message_id
-            )
+        if res.get('errors', None):
+            bot.answer_callback_query(query.id, res['errors'][0]['message'])
             return
 
         bot.edit_message_text(
@@ -258,7 +255,7 @@ def on_callback_query(query: types.CallbackQuery):
                                        telegramToUserId.format(u_id),
                                        telegram_id=u_id)
 
-        if from_user_id.get('errors'):
+        if from_user_id.get('errors', None):
             bot.edit_message_text(
                 localization['register_first'],
                 inline_message_id=query.inline_message_id
@@ -274,11 +271,8 @@ def on_callback_query(query: types.CallbackQuery):
         res = graphql_request(environ.get('API_URL'), transfer.format(
             value[1], from_user_id, to_user_id, value[2]), telegram_id=u_id)
 
-        if res.get('errors'):
-            bot.edit_message_text(
-                res['errors'][0]['message'],
-                inline_message_id=query.inline_message_id
-            )
+        if res.get('errors', None):
+            bot.answer_callback_query(query.id, res['errors'][0]['message'])
             return
 
         bot.edit_message_text(
@@ -324,11 +318,20 @@ def empty_query(query: types.InlineQuery):
 def answer_query(query: types.InlineQuery):
     u_id = query.from_user.id
 
-    exists = user_exists(u_id, environ.get('API_URL'))
+    api_url = environ.get('API_URL')
 
-    if not exists:
+    res = graphql_request(api_url,
+                          telegramToUserId.format(u_id),
+                          telegram_id=u_id)
+
+    if res.get('errors', None):
         on_inline_not_registered(query)
         return
+
+    internal_id = res['data']['telegramToUserId']
+    res = graphql_request(api_url,
+                          profile.format(internal_id), telegram_id=u_id)['data']['user']
+    money = res['money']
 
     try:
         matches = re.match(r'(\d+)? ?(.*)', query.query)
@@ -341,39 +344,51 @@ def answer_query(query: types.InlineQuery):
         empty_query(query)
         return
 
+    num = int(num)
     test = len('xxxx;{};{};{}'.format(u_id, num, message).encode('utf-8'))
 
     if test > 64:
         on_callback_data_overflow(query)
         return
 
-    if int(num) >= (2**32 - 1):
+    if num >= (2**32 - 1):
         on_integer_overflow(query)
         return
 
-    give_kb = types.InlineKeyboardMarkup()
-    give_kb.row(
-        types.InlineKeyboardButton(
-            localization['inline_keyboard']['receive'], callback_data='give;{};{};{}'.format(u_id, num, message)),
-        types.InlineKeyboardButton(
-            localization['inline_keyboard']['cancel'], callback_data='cancel_request;{}'.format(u_id))
-    )
+    if num > money:
+        give = types.InlineQueryResultArticle(
+            id='1',
+            title=localization['inline_mode']['not_enough']['title'],
+            description=localization['inline_mode']['not_enough']['description'],
+            input_message_content=types.InputTextMessageContent(
+                message_text=localization['inline_mode']['not_enough']['message_text']),
+            thumb_url='https://i.imgur.com/f2f4fJu.png'
+        )
 
-    give = types.InlineQueryResultArticle(
-        id='1',
-        title=localization['inline_mode']['give']['title'].format(num),
-        description=(localization['inline_mode']['give']['description'].format(message)
-                     if message else localization['inline_mode']['no_message']),
+    else:
+        give_kb = types.InlineKeyboardMarkup()
+        give_kb.row(
+            types.InlineKeyboardButton(
+                localization['inline_keyboard']['receive'], callback_data='give;{};{};{}'.format(u_id, num, message)),
+            types.InlineKeyboardButton(
+                localization['inline_keyboard']['cancel'], callback_data='cancel_request;{}'.format(u_id))
+        )
 
-        input_message_content=types.InputTextMessageContent(
-            message_text=localization['inline_mode']['give']['message_text'].format(num) +
-            (localization['inline_mode']['message_text_trans_message'].format(
-                message) if message else ''),
-            parse_mode='HTML'),
+        give = types.InlineQueryResultArticle(
+            id='1',
+            title=localization['inline_mode']['give']['title'].format(num),
+            description=(localization['inline_mode']['give']['description'].format(message)
+                         if message else localization['inline_mode']['no_message']),
 
-        reply_markup=give_kb,
-        thumb_url='https://i.imgur.com/f2f4fJu.png'
-    )
+            input_message_content=types.InputTextMessageContent(
+                message_text=localization['inline_mode']['give']['message_text'].format(num) +
+                (localization['inline_mode']['message_text_trans_message'].format(
+                    message) if message else ''),
+                parse_mode='HTML'),
+
+            reply_markup=give_kb,
+            thumb_url='https://i.imgur.com/f2f4fJu.png'
+        )
 
     ask_kb = types.InlineKeyboardMarkup()
     ask_kb.row(

@@ -2,6 +2,7 @@ localization = {
     'en': {
         'start': 'Hi! This is <b>new Bank of #brobots</b>',
         'try_help': 'Try /help to see all commands!',
+
         'help': u'<b>List of commands:</b>\n'
                 u'/help - <i>see list of commands</i>\n'
                 u'/profile - <i>your profile</i>\n'

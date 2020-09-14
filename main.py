@@ -220,6 +220,13 @@ def on_callback_query(query: types.CallbackQuery):
                                        telegramToUserId.format(value[0]),
                                        telegram_id=value[0])['data']['telegramToUserId']
 
+        res = graphql_request(environ.get('API_URL'),
+                              transactions.format(from_user_id), telegram_id=value[0])['data']['user']
+
+        for t in res['transactions']:
+            if t['queryId'] == query.inline_message_id:
+                return
+
         to_user_id = graphql_request(environ.get('API_URL'),
                                      telegramToUserId.format(u_id),
                                      telegram_id=u_id)
@@ -235,7 +242,7 @@ def on_callback_query(query: types.CallbackQuery):
         to_user_id = to_user_id['data']['telegramToUserId']
 
         res = graphql_request(environ.get('API_URL'), transfer.format(
-            value[1], from_user_id, to_user_id, value[2]), telegram_id=value[0])
+            value[1], from_user_id, to_user_id, value[2], query.inline_message_id), telegram_id=value[0])
 
         if res.get('errors', None):
             bot.answer_callback_query(query.id, res['errors'][0]['message'])
@@ -269,7 +276,7 @@ def on_callback_query(query: types.CallbackQuery):
                                      telegram_id=value[0])['data']['telegramToUserId']
 
         res = graphql_request(environ.get('API_URL'), transfer.format(
-            value[1], from_user_id, to_user_id, value[2]), telegram_id=u_id)
+            value[1], from_user_id, to_user_id, value[2], query.inline_message_id), telegram_id=u_id)
 
         if res.get('errors', None):
             bot.answer_callback_query(query.id, res['errors'][0]['message'])

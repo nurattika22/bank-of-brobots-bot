@@ -24,6 +24,7 @@ transactions = '''query {{
                 username
             }}
             message
+            queryId
         }}
     }}
 }}'''
@@ -34,7 +35,7 @@ telegramToUserId = '''query {{
 '''
 
 transfer = '''mutation {{
-    transfer(money: {}, from_user_id: "{}", to_user_id: "{}", message: "{}") {{
+    transfer(money: {}, from_user_id: "{}", to_user_id: "{}", message: "{}", query_id: "{}") {{
         id
     }}
 }}'''

@@ -6,8 +6,8 @@ localization = {
         'help': u'<b>List of commands:</b>\n'
                 u'/help - <i>see list of commands</i>\n'
                 u'/profile - <i>your profile</i>\n'
-                u'/transactions - <i>list of transactions</i>\n'
                 u'/stats - <i>see your stats</i>\n'
+                u'/transactions - <i>list of transactions</i>\n'
                 u'\nTo transfer money type @brobank_bot in chat with your friend and follow instructions there',
 
         'what_is_new': u'<b>What\'s <i>new</i>?</b>\n'

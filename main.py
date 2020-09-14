@@ -24,7 +24,6 @@ def on_start(message: types.Message):
 
     bot.reply_to(message, localization['start'])
 
-    bot.send_chat_action(u_id, 'typing')
     exists = user_exists(u_id, environ.get('API_URL'))
 
     if not exists:

@@ -4,7 +4,8 @@ localization = {
         'help': u'*List of commands:*\n'
                 u'/help - _see list of commands_\n'
                 u'/profile - _your profile_\n'
-                u'/transactions - _list of transactions_\n',
+                u'/transactions - _list of transactions_\n'
+                u'\nTo transfer money type @brobank\_bot in chat with your friend and follow instructions there',
 
         'register': 'Would you like to register?',
         'register_success': 'Successfully registered',

@@ -1,11 +1,15 @@
 localization = {
     'en': {
-        'start': 'Hi! This *Bank of #brobots*',
-        'help': u'*List of commands:*\n'
+        'start': 'Hi! This <b>new Bank of #brobots</b>',
+        'help': u'<b>List of commands:</b>\n'
                 u'/help - <i>see list of commands</i>\n'
                 u'/profile - <i>your profile</i>\n'
                 u'/transactions - <i>list of transactions</i>\n'
                 u'\nTo transfer money type @brobank_bot in chat with your friend and follow instructions there',
+        'what_is_new': u'<b>What\'s <i>new</i>?</b>\n'
+                       u'- Weekly limit is cancelled! 🎉\n'
+                       u'- Performance increased! 🚀\n'
+                       u'- Bugfixes! 🐛\n',
 
         'register': 'Would you like to register?',
         'register_success': 'Successfully registered',
@@ -21,7 +25,7 @@ localization = {
         'transaction_list_item': u'- <i>{} bc</i> from {} to {}\n'
                                  u'     - <i>{}</i>\n',
 
-        'profile': u'*Profile*\n'
+        'profile': u'<b>Profile</b>\n'
                     u'Name: <i>{name}</i>\n'
                     u'Money: <i>{money} bc</i>\n'
                     u'Total transactions: <i>{transactions}</i>\n',

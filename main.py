@@ -1,5 +1,6 @@
 import re
 import time
+from datetime import datetime
 from os import environ
 
 import requests
@@ -32,12 +33,23 @@ def on_start(message: types.Message):
         bot.send_message(u_id, localization['register'], reply_markup=kb)
         return
 
+    end_date = datetime.strptime(environ.get(
+        'STOP_WHAT_IS_NEW'), '%Y-%m-%d %H:%M:%S')
+    if datetime.now() <= end_date:
+        bot.send_message(u_id, localization['what_is_new'])
+
     bot.send_message(u_id, localization['help'])
 
 
 @bot.message_handler(commands=['help'])
 def on_help(message: types.Message):
     bot.reply_to(message, localization['help'])
+
+
+@bot.message_handler(commands=['new'])
+def on_new(message: types.Message):
+    u_id = message.from_user.id
+    bot.send_message(u_id, localization['what_is_new'])
 
 
 @bot.message_handler(commands=["ping"])

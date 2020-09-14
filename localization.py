@@ -30,7 +30,8 @@ localization = {
         'register_cancel': 'Registration successfully cancelled',
         'register_first': 'You need to register to use this! ❌',
 
-        'transaction_success': 'Transaction finished successfully! 😃',
+        'transaction_success': u'Transaction finished successfully! 😃\n'
+                               u'Money sent: <i>{} bc</i>\n',
         'transaction_failure': 'Something went wrong 🙁',
         'transaction_cancel': 'Cancelled ❌',
 

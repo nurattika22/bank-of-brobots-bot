@@ -242,7 +242,7 @@ def on_callback_query(query: types.CallbackQuery):
             return
 
         bot.edit_message_text(
-            localization['transaction_success'],
+            localization['transaction_success'].format(value[1]),
             inline_message_id=query.inline_message_id
         )
 
@@ -276,7 +276,7 @@ def on_callback_query(query: types.CallbackQuery):
             return
 
         bot.edit_message_text(
-            localization['transaction_success'],
+            localization['transaction_success'].format(value[1]),
             inline_message_id=query.inline_message_id
         )
 
@@ -340,7 +340,7 @@ def answer_query(query: types.InlineQuery):
     except AttributeError:
         return
 
-    if not num or int(num) == 0:
+    if not num or int(num) <= 0:
         empty_query(query)
         return
 

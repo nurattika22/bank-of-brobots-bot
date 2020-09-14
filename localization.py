@@ -4,7 +4,7 @@ localization = {
         'try_help': 'Try /help to see all commands!',
 
         'help': u'<b>List of commands:</b>\n'
-                u'/help - <i>see list of commands</i>\n'
+                u'/help - <i>list of commands</i>\n'
                 u'/profile - <i>your profile</i>\n'
                 u'/stats - <i>see your stats</i>\n'
                 u'/transactions - <i>list of transactions</i>\n'
@@ -28,7 +28,7 @@ localization = {
         'register_success': 'Successfully registered ✅',
         'register_failure': 'Something went wrong 🙁',
         'register_cancel': 'Registration successfully cancelled',
-        'register_first': 'You need to register to use this!',
+        'register_first': 'You need to register to use this! ❌',
 
         'transaction_success': 'Transaction finished successfully! 😃',
         'transaction_failure': 'Something went wrong 🙁',

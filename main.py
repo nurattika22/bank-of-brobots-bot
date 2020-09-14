@@ -222,7 +222,16 @@ def on_callback_query(query: types.CallbackQuery):
 
         to_user_id = graphql_request(environ.get('API_URL'),
                                      telegramToUserId.format(u_id),
-                                     telegram_id=u_id)['data']['telegramToUserId']
+                                     telegram_id=u_id)
+
+        if to_user_id.get('errors'):
+            bot.edit_message_text(
+                localization['register_first'],
+                inline_message_id=query.inline_message_id
+            )
+            return
+
+        to_user_id = to_user_id['data']['telegramToUserId']
 
         res = graphql_request(environ.get('API_URL'), transfer.format(
             value[1], from_user_id, to_user_id, value[2]), telegram_id=value[0])
@@ -246,7 +255,16 @@ def on_callback_query(query: types.CallbackQuery):
 
         from_user_id = graphql_request(environ.get('API_URL'),
                                        telegramToUserId.format(u_id),
-                                       telegram_id=u_id)['data']['telegramToUserId']
+                                       telegram_id=u_id)
+
+        if from_user_id.get('errors'):
+            bot.edit_message_text(
+                localization['register_first'],
+                inline_message_id=query.inline_message_id
+            )
+            return
+
+        from_user_id = from_user_id['data']['telegramToUserId']
 
         to_user_id = graphql_request(environ.get('API_URL'),
                                      telegramToUserId.format(value[0]),
@@ -346,7 +364,7 @@ def answer_query(query: types.InlineQuery):
             message_text=localization['inline_mode']['give']['message_text'].format(num) +
             (localization['inline_mode']['message_text_trans_message'].format(
                 message) if message else ''),
-            parse_mode='Markdown'),
+            parse_mode='HTML'),
 
         reply_markup=give_kb,
         thumb_url='https://i.imgur.com/f2f4fJu.png'
@@ -370,7 +388,7 @@ def answer_query(query: types.InlineQuery):
             message_text=localization['inline_mode']['request']['message_text'].format(num) +
             (localization['inline_mode']['message_text_trans_message'].format(
                 message) if message else ''),
-            parse_mode='Markdown'),
+            parse_mode='HTML'),
 
         reply_markup=ask_kb,
         thumb_url='https://i.imgur.com/XYDwkVZ.png'

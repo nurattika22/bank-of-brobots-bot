@@ -17,7 +17,7 @@ localization = {
         'transaction_cancel': 'Cancelled',
 
         'transaction_list_title': '*Transactions*\n',
-        'transaction_list_item': u'- _{} bc_ from @{} to @{}\n'
+        'transaction_list_item': u'- _{} bc_ from {} to {}\n'
                                  u'     - _{}_\n',
 
         'profile': u'*Profile*\n'

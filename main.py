@@ -99,8 +99,22 @@ def on_transactions(message: types.Message):
     text_response = localization['transaction_list_title']
 
     for t in res['transactions']:
+        user1, user2 = '', ''
+
+        if not t['fromUser']['username']:
+            user1 = t['fromUser']['name']
+
+        else:
+            user1 = '@' + t['fromUser']['username']
+
+        if not t['toUser']['username']:
+            user2 = t['toUser']['name']
+
+        else:
+            user2 = '@' + t['toUser']['username']
+
         text_response += localization['transaction_list_item'].format(
-            t['money'], t['fromUser']['username'], t['toUser']['username'], t['message'])
+            t['money'], user1, user2, t['message'])
 
     if not len(res['transactions']):
         text_response += localization['empty_list']

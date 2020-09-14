@@ -24,6 +24,8 @@ def on_start(message: types.Message):
     u_id = message.from_user.id
 
     bot.reply_to(message, localization['start'])
+    bot.send_chat_action(u_id, 'typing')
+    time.sleep(1)
 
     exists = user_exists(u_id, environ.get('API_URL'))
 
@@ -35,10 +37,12 @@ def on_start(message: types.Message):
 
     end_date = datetime.strptime(environ.get(
         'STOP_WHAT_IS_NEW'), '%Y-%m-%d %H:%M:%S')
+
     if datetime.now() <= end_date:
         bot.send_message(u_id, localization['what_is_new'])
 
-    bot.send_message(u_id, localization['help'])
+    else:
+        bot.send_message(u_id, localization['help'])
 
 
 @bot.message_handler(commands=['help'])
@@ -155,7 +159,13 @@ def on_callback_query(query: types.CallbackQuery):
             bot.edit_message_text(
                 localization['register_success'], u_id, query.message.message_id)
 
-            on_help(query.message)
+            end_date = datetime.strptime(environ.get(
+                'STOP_WHAT_IS_NEW'), '%Y-%m-%d %H:%M:%S')
+            if datetime.now() <= end_date:
+                bot.send_message(u_id, localization['what_is_new'])
+
+            time.sleep(1)
+            bot.send_message(u_id, localization['try_help'])
 
         else:
             bot.edit_message_text(

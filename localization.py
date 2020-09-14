@@ -1,6 +1,7 @@
 localization = {
     'en': {
-        'start': 'Hi! This <b>new Bank of #brobots</b>',
+        'start': 'Hi! This is <b>new Bank of #brobots</b>',
+        'try_help': 'Try /help to see all commands!',
         'help': u'<b>List of commands:</b>\n'
                 u'/help - <i>see list of commands</i>\n'
                 u'/profile - <i>your profile</i>\n'
@@ -12,14 +13,14 @@ localization = {
                        u'- Bugfixes! 🐛\n',
 
         'register': 'Would you like to register?',
-        'register_success': 'Successfully registered',
-        'register_failure': 'Something went wrong. Developers are notified',
+        'register_success': 'Successfully registered ✅',
+        'register_failure': 'Something went wrong 🙁',
         'register_cancel': 'Registration successfully cancelled',
         'register_first': 'You need to register to use this!',
 
-        'transaction_success': 'Success',
-        'transaction_failure': 'Something went wrong',
-        'transaction_cancel': 'Cancelled',
+        'transaction_success': 'Transaction finished successfully! 😃',
+        'transaction_failure': 'Something went wrong 🙁',
+        'transaction_cancel': 'Cancelled ❌',
 
         'transaction_list_title': '<b>Transactions</b>\n',
         'transaction_list_item': u'- <i>{} bc</i> from {} to {}\n'

@@ -14,10 +14,12 @@ transactions = '''query {{
         transactions {{
             money
             fromUser {{
+                telegram_id
                 name
                 username
             }}
             toUser {{
+                telegram_id
                 name
                 username
             }}

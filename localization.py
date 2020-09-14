@@ -6,11 +6,22 @@ localization = {
                 u'/help - <i>see list of commands</i>\n'
                 u'/profile - <i>your profile</i>\n'
                 u'/transactions - <i>list of transactions</i>\n'
+                u'/stats - <i>see your stats</i>\n'
                 u'\nTo transfer money type @brobank_bot in chat with your friend and follow instructions there',
+
         'what_is_new': u'<b>What\'s <i>new</i>?</b>\n'
                        u'- Weekly limit is cancelled! 🎉\n'
                        u'- Performance increased! 🚀\n'
+                       u'- See your expenses and income! 💹\n'
+                       u'    = use /stats\n'
                        u'- Bugfixes! 🐛\n',
+
+        'stats': u'<b>Your stats</b>\n'
+                 u'Expenses: <i>{expenses} bc</i> 💸\n'
+                 u'Income: <i>{income} bc</i> 💰\n\n'
+                 u'Top expense: <i>{top_ex} bc</i>\n'
+                 u'Top income: <i>{top_in} bc</i>\n\n'
+                 u'Transactions: <i>{transactions}</i>\n',
 
         'register': 'Would you like to register?',
         'register_success': 'Successfully registered ✅',

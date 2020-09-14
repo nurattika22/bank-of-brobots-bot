@@ -189,7 +189,7 @@ def on_callback_query(query: types.CallbackQuery):
 
         if res.get('errors'):
             bot.edit_message_text(
-                localization['transaction_failure'],
+                res['errors'][0]['message'],
                 inline_message_id=query.inline_message_id
             )
             return
@@ -217,7 +217,7 @@ def on_callback_query(query: types.CallbackQuery):
 
         if res.get('errors'):
             bot.edit_message_text(
-                localization['transaction_failure'],
+                res['errors'][0]['message'],
                 inline_message_id=query.inline_message_id
             )
             return

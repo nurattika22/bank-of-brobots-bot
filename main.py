@@ -229,6 +229,7 @@ def on_callback_query(query: types.CallbackQuery):
                 localization['register_first'],
                 inline_message_id=query.inline_message_id
             )
+            bot.reply_to()
             return
 
         to_user_id = to_user_id['data']['telegramToUserId']
@@ -336,7 +337,7 @@ def answer_query(query: types.InlineQuery):
     except AttributeError:
         return
 
-    if not num:
+    if not num or int(num) == 0:
         empty_query(query)
         return
 

@@ -15,7 +15,7 @@ load_config()
 localization = localization['en']
 
 bot = telebot.AsyncTeleBot(environ.get(
-    'TELEGRAM_API_TOKEN_DEV'), parse_mode='MARKDOWN')
+    'TELEGRAM_API_TOKEN_DEV'), parse_mode='HTML')
 
 
 @bot.message_handler(commands=['start'])
@@ -113,7 +113,7 @@ def on_transactions(message: types.Message):
             user2 = '@' + t['toUser']['username']
 
         text_response += localization['transaction_list_item'].format(
-            t['money'], user1, user2, t['message'])
+            t['money'], user1, user2, t['message'] if t['message'] else 'no message')
 
     if not len(res['transactions']):
         text_response += localization['empty_list']

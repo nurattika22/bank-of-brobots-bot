@@ -2,10 +2,10 @@ localization = {
     'en': {
         'start': 'Hi! This *Bank of #brobots*',
         'help': u'*List of commands:*\n'
-                u'/help - _see list of commands_\n'
-                u'/profile - _your profile_\n'
-                u'/transactions - _list of transactions_\n'
-                u'\nTo transfer money type @brobank\_bot in chat with your friend and follow instructions there',
+                u'/help - <i>see list of commands</i>\n'
+                u'/profile - <i>your profile</i>\n'
+                u'/transactions - <i>list of transactions</i>\n'
+                u'\nTo transfer money type @brobank_bot in chat with your friend and follow instructions there',
 
         'register': 'Would you like to register?',
         'register_success': 'Successfully registered',
@@ -17,15 +17,15 @@ localization = {
         'transaction_failure': 'Something went wrong',
         'transaction_cancel': 'Cancelled',
 
-        'transaction_list_title': '*Transactions*\n',
-        'transaction_list_item': u'- _{} bc_ from {} to {}\n'
-                                 u'     - _{}_\n',
+        'transaction_list_title': '<b>Transactions</b>\n',
+        'transaction_list_item': u'- <i>{} bc</i> from {} to {}\n'
+                                 u'     - <i>{}</i>\n',
 
         'profile': u'*Profile*\n'
-                    u'Name: _{name}_\n'
-                    u'Money: _{money} bc_\n'
-                    u'Total transactions: _{transactions}_\n',
-        'profile_admin': 'Admin: _{}_\n',
+                    u'Name: <i>{name}</i>\n'
+                    u'Money: <i>{money} bc</i>\n'
+                    u'Total transactions: <i>{transactions}</i>\n',
+        'profile_admin': 'Admin: <i>{}</i>\n',
 
         'inline_keyboard': {
             'yes': 'Yes',
@@ -36,7 +36,7 @@ localization = {
         },
 
         'inline_mode': {
-            'message_text_trans_message': '\nMessage: _{}_',
+            'message_text_trans_message': '\nMessage: <i>{}</i>',
             'no_message': 'No message provided',
             'empty': {
                 'title': '💵 Enter amount of brocoins',

@@ -10,7 +10,7 @@ from telebot import types
 from common import get_user_str, load_config, user_exists, yesno_keyboard
 from localization import localization
 from queries import profile, telegramToUserId, transactions, transfer
-from services import graphql_request
+from services import graphql_request, get_transactions
 
 load_config()
 localization = localization['en']
@@ -96,20 +96,11 @@ def on_profile(message: types.Message):
 @bot.message_handler(commands=['transactions'])
 def on_transactions(message: types.Message):
     u_id = message.from_user.id
-    api_url = environ.get('API_URL')
+    res = get_transactions(telegram_id=u_id)
 
-    res = graphql_request(api_url,
-                          telegramToUserId.format(u_id),
-                          telegram_id=u_id)
-
-    if res.get('errors', None):
+    if not res:
         bot.reply_to(message, localization['register_first'])
         return
-
-    internal_id = res['data']['telegramToUserId']
-
-    res = graphql_request(api_url,
-                          transactions.format(internal_id), telegram_id=u_id)['data']['user']
 
     text_response = localization['transaction_list_title']
 
@@ -140,20 +131,11 @@ def on_transactions(message: types.Message):
 @bot.message_handler(commands=['stats'])
 def on_stats(message: types.Message):
     u_id = str(message.from_user.id)
-    api_url = environ.get('API_URL')
+    res = get_transactions(telegram_id=u_id)
 
-    res = graphql_request(api_url,
-                          telegramToUserId.format(u_id),
-                          telegram_id=u_id)
-
-    if res.get('errors', None):
+    if not res:
         bot.reply_to(message, localization['register_first'])
         return
-
-    internal_id = res['data']['telegramToUserId']
-
-    res = graphql_request(api_url,
-                          transactions.format(internal_id), telegram_id=u_id)['data']['user']
 
     stats = {
         'expenses': 0,
@@ -220,8 +202,7 @@ def on_callback_query(query: types.CallbackQuery):
                                        telegramToUserId.format(value[0]),
                                        telegram_id=value[0])['data']['telegramToUserId']
 
-        res = graphql_request(environ.get('API_URL'),
-                              transactions.format(from_user_id), telegram_id=value[0])['data']['user']
+        res = get_transactions(user_id=from_user_id)
 
         for t in res['transactions']:
             if t['queryId'] == query.inline_message_id:
@@ -261,6 +242,12 @@ def on_callback_query(query: types.CallbackQuery):
         from_user_id = graphql_request(environ.get('API_URL'),
                                        telegramToUserId.format(u_id),
                                        telegram_id=u_id)
+
+        res = get_transactions(user_id=from_user_id)
+
+        for t in res['transactions']:
+            if t['queryId'] == query.inline_message_id:
+                return
 
         if from_user_id.get('errors', None):
             bot.edit_message_text(

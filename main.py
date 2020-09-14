@@ -286,6 +286,10 @@ def on_callback_query(query: types.CallbackQuery):
         )
 
     elif title == 'cancel_request':
+        if str(query.from_user.id) != value[0]:
+            bot.answer_callback_query(query.id, localization['cannot'])
+            return
+
         bot.edit_message_text(
             localization['transaction_cancel'],
             inline_message_id=query.inline_message_id
@@ -351,7 +355,7 @@ def answer_query(query: types.InlineQuery):
         types.InlineKeyboardButton(
             localization['inline_keyboard']['receive'], callback_data='give;{};{};{}'.format(u_id, num, message)),
         types.InlineKeyboardButton(
-            localization['inline_keyboard']['cancel'], callback_data='cancel_request')
+            localization['inline_keyboard']['cancel'], callback_data='cancel_request;{}'.format(u_id))
     )
 
     give = types.InlineQueryResultArticle(
@@ -375,7 +379,7 @@ def answer_query(query: types.InlineQuery):
         types.InlineKeyboardButton(
             localization['inline_keyboard']['give'], callback_data='recv;{};{};{}'.format(u_id, num, message)),
         types.InlineKeyboardButton(
-            localization['inline_keyboard']['cancel'], callback_data='cancel_request')
+            localization['inline_keyboard']['cancel'], callback_data='cancel_request;{}'.format(u_id))
     )
 
     ask = types.InlineQueryResultArticle(

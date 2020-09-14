@@ -13,7 +13,7 @@ localization = {
         'what_is_new': u'<b>What\'s <i>new</i>?</b>\n'
                        u'- Weekly limit is cancelled! 🎉\n'
                        u'- Performance increased! 🚀\n'
-                       u'- See your expenses and income! 💹\n'
+                       u'- Track your expenses and income! 💹\n'
                        u'    = use /stats\n'
                        u'- Bugfixes! 🐛\n',
 

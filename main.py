@@ -243,12 +243,6 @@ def on_callback_query(query: types.CallbackQuery):
                                        telegramToUserId.format(u_id),
                                        telegram_id=u_id)
 
-        res = get_transactions(user_id=from_user_id)
-
-        for t in res['transactions']:
-            if t['queryId'] == query.inline_message_id:
-                return
-
         if from_user_id.get('errors', None):
             bot.edit_message_text(
                 localization['register_first'],
@@ -257,6 +251,11 @@ def on_callback_query(query: types.CallbackQuery):
             return
 
         from_user_id = from_user_id['data']['telegramToUserId']
+        res = get_transactions(user_id=from_user_id)
+
+        for t in res['transactions']:
+            if t['queryId'] == query.inline_message_id:
+                return
 
         to_user_id = graphql_request(environ.get('API_URL'),
                                      telegramToUserId.format(value[0]),

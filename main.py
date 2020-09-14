@@ -324,6 +324,10 @@ def answer_query(query: types.InlineQuery):
         on_callback_data_overflow(query)
         return
 
+    if int(num) >= (2**32 - 1):
+        on_integer_overflow(query)
+        return
+
     give_kb = types.InlineKeyboardMarkup()
     give_kb.row(
         types.InlineKeyboardButton(
@@ -391,10 +395,23 @@ def on_inline_not_registered(query: types.InlineQuery):
 def on_callback_data_overflow(query: types.InlineQuery):
     r = types.InlineQueryResultArticle(
         id='1',
-        title=localization['inline_mode']['overflow']['title'],
-        description=localization['inline_mode']['overflow']['description'],
+        title=localization['inline_mode']['message_overflow']['title'],
+        description=localization['inline_mode']['message_overflow']['description'],
         input_message_content=types.InputTextMessageContent(
-            message_text=localization['inline_mode']['overflow']['message_text'])
+            message_text=localization['inline_mode']['message_overflow']['message_text'])
+    )
+
+    bot.answer_inline_query(
+        query.id, [r], cache_time=environ.get('INLINE_QUERY_CACHE_TIME'))
+
+
+def on_integer_overflow(query: types.InlineQuery):
+    r = types.InlineQueryResultArticle(
+        id='1',
+        title=localization['inline_mode']['integer_overflow']['title'],
+        description=localization['inline_mode']['integer_overflow']['description'],
+        input_message_content=types.InputTextMessageContent(
+            message_text=localization['inline_mode']['integer_overflow']['message_text'])
     )
 
     bot.answer_inline_query(

@@ -81,6 +81,11 @@ localization = {
                 'description': '',
                 'message_text': '❌ Not enough money!'
             },
+            'balance': {
+                'title': '{} brocoins on account',
+                'description': 'Touch to share your balance',
+                'message_text': 'I have {} bc'
+            },
             'give': {
                 'title': 'Send {} brocoins',
                 'description': 'Message: {}',

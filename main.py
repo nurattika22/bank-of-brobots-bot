@@ -294,15 +294,31 @@ def on_callback_query(query: types.CallbackQuery):
 @bot.inline_handler(func=lambda query: len(query.query) == 0)
 def empty_query(query: types.InlineQuery):
     u_id = query.from_user.id
+    api_url = environ.get('API_URL')
 
-    exists = user_exists(u_id, environ.get('API_URL'))
+    res = graphql_request(api_url,
+                          telegramToUserId.format(u_id),
+                          telegram_id=u_id)
 
-    if not exists:
+    if res.get('errors', None):
         on_inline_not_registered(query)
         return
 
-    r = types.InlineQueryResultArticle(
+    internal_id = res['data']['telegramToUserId']
+    res = graphql_request(api_url,
+                          profile.format(internal_id), telegram_id=u_id)['data']['user']
+    money = res['money']
+
+    balance = types.InlineQueryResultArticle(
         id='1',
+        title=localization['inline_mode']['balance']['title'].format(money),
+        description=localization['inline_mode']['balance']['description'],
+        input_message_content=types.InputTextMessageContent(
+            message_text=localization['inline_mode']['balance']['message_text'].format(money)),
+    )
+
+    instructions = types.InlineQueryResultArticle(
+        id='2',
         title=localization['inline_mode']['empty']['title'],
         description=localization['inline_mode']['empty']['description'],
         input_message_content=types.InputTextMessageContent(
@@ -311,13 +327,12 @@ def empty_query(query: types.InlineQuery):
     )
 
     bot.answer_inline_query(
-        query.id, [r], cache_time=environ.get('INLINE_QUERY_CACHE_TIME'))
+        query.id, [balance, instructions], cache_time=environ.get('INLINE_QUERY_CACHE_TIME'))
 
 
 @bot.inline_handler(func=lambda query: len(query.query))
 def answer_query(query: types.InlineQuery):
     u_id = query.from_user.id
-
     api_url = environ.get('API_URL')
 
     res = graphql_request(api_url,
@@ -357,7 +372,7 @@ def answer_query(query: types.InlineQuery):
 
     if num > money:
         give = types.InlineQueryResultArticle(
-            id='1',
+            id='2',
             title=localization['inline_mode']['not_enough']['title'],
             description=localization['inline_mode']['not_enough']['description'],
             input_message_content=types.InputTextMessageContent(
@@ -375,7 +390,7 @@ def answer_query(query: types.InlineQuery):
         )
 
         give = types.InlineQueryResultArticle(
-            id='1',
+            id='2',
             title=localization['inline_mode']['give']['title'].format(num),
             description=(localization['inline_mode']['give']['description'].format(message)
                          if message else localization['inline_mode']['no_message']),
@@ -399,7 +414,7 @@ def answer_query(query: types.InlineQuery):
     )
 
     ask = types.InlineQueryResultArticle(
-        id='2',
+        id='3',
         title=localization['inline_mode']['request']['title'].format(num),
         description=(localization['inline_mode']['request']['description'].format(message)
                      if message else localization['inline_mode']['no_message']),
@@ -413,8 +428,17 @@ def answer_query(query: types.InlineQuery):
         reply_markup=ask_kb,
         thumb_url='https://i.imgur.com/XYDwkVZ.png'
     )
+
+    balance = types.InlineQueryResultArticle(
+        id='1',
+        title=localization['inline_mode']['balance']['title'].format(money),
+        description=localization['inline_mode']['balance']['description'],
+        input_message_content=types.InputTextMessageContent(
+            message_text=localization['inline_mode']['balance']['message_text'].format(money)),
+    )
+
     bot.answer_inline_query(
-        query.id, [give, ask], cache_time=environ.get('INLINE_QUERY_CACHE_TIME'))
+        query.id, [balance, give, ask], cache_time=environ.get('INLINE_QUERY_CACHE_TIME'))
 
 
 def on_inline_not_registered(query: types.InlineQuery):

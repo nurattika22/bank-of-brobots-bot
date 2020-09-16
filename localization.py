@@ -39,6 +39,9 @@ localization = {
         'transaction_list_item': u'- <i>{} bc</i> from {} to {}\n'
                                  u'     - <i>{}</i>\n',
 
+        'notification_give': 'You sent <i>{} bc</i> to {}',
+        'notification_request': '{} sent you <i>{} bc</i>',
+
         'profile': u'<b>Profile</b>\n'
                     u'Name: <i>{name}</i>\n'
                     u'Money: <i>{money} bc</i>\n'

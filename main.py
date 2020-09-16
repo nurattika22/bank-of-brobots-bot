@@ -234,6 +234,13 @@ def on_callback_query(query: types.CallbackQuery):
             inline_message_id=query.inline_message_id
         )
 
+        name = '@' + \
+            query.from_user.username if query.from_user.username else get_user_str(
+                query.from_user)
+
+        bot.send_message(
+            value[0], localization['notification_give'].format(value[1], name))
+
     elif title == 'recv':
         if str(u_id) == value[0]:
             bot.answer_callback_query(query.id, localization['cannot'])
@@ -272,6 +279,13 @@ def on_callback_query(query: types.CallbackQuery):
             localization['transaction_success'].format(value[1]),
             inline_message_id=query.inline_message_id
         )
+
+        name = '@' + \
+            query.from_user.username if query.from_user.username else get_user_str(
+                query.from_user)
+
+        bot.send_message(
+            value[0], localization['notification_request'].format(name, value[1]))
 
     elif title == 'cancel_request':
         if str(query.from_user.id) != value[0]:

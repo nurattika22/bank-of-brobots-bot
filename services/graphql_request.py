@@ -1,18 +1,14 @@
 import requests
-from services.login import login
 
 
-def graphql_request(db, user_query, url, id, query, need_login=False):
-    if need_login:
-        login(db, user_query, url, id)
-
-    token = db.search(user_query.telegram_id == id)[0]['token']
-    hed = {'Authorization': 'Bearer ' + token}
+def graphql_request(url, query, u_id=None, telegram_id=None):
+    hed = {}
     data = {'query': query}
 
-    try:
-        response = requests.post(url, json=data, headers=hed).json()
-    except Exception:
-        return graphql_request(db, user_query, url, id, query, True)
+    if u_id:
+        hed = {'id': str(u_id)}
+    elif telegram_id:
+        hed = {'telegram_id': str(telegram_id)}
 
+    response = requests.post(url, json=data, headers=hed).json()
     return response

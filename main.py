@@ -1,295 +1,360 @@
-import logging
-import os
 import re
+import time
+from datetime import datetime
+from os import environ
 
 import requests
-import tinydb
 import telebot
 from telebot import types
 
-import queries
-from config import config
-from services import *
+from common import get_user_str, load_config, user_exists, yesno_keyboard
+from localization import localization
+from queries import profile, telegramToUserId, transactions, transfer
+from services import graphql_request, get_transactions
 
-if not os.path.exists(config['DB']['PATH']):
-    os.makedirs(os.path.dirname(config['DB']['PATH']), exist_ok=True)
+load_config()
+localization = localization['en']
 
-db = tinydb.TinyDB(config['DB']['PATH'])
-user_query = tinydb.Query()
-
-bot = telebot.TeleBot(config['BOT']['TOKEN'])
-
-logging.getLogger('requests').setLevel(logging.WARNING)
-logging.getLogger('urllib3').setLevel(logging.WARNING)
-
-logging.basicConfig(filename=config['LOG']['PATH'],
-                    format=config['LOG']['FORMAT'],
-                    level=logging.DEBUG)
+bot = telebot.AsyncTeleBot(environ.get(
+    'TELEGRAM_API_TOKEN_DEV'), parse_mode='HTML')
 
 
 @bot.message_handler(commands=['start'])
-def start_menu(message: types.Message):
-    u = message.chat
-    user_str = generate_user_str(u)
+def on_start(message: types.Message):
+    u_id = message.from_user.id
 
-    if not find_by_telegram_id(db, user_query, u.id):
-        kb = yesno_keyboard(config, 'register')
-        bot.reply_to(message, config['BOT']['START_REGISTER'], reply_markup=kb)
+    bot.reply_to(message, localization['start'])
+    bot.send_chat_action(u_id, 'typing')
+    time.sleep(1)
+
+    exists = user_exists(u_id, environ.get('API_URL'))
+
+    if not exists:
+        kb = yesno_keyboard(
+            'register', localization['inline_keyboard']['yes'], localization['inline_keyboard']['no'])
+        bot.send_message(u_id, localization['register'], reply_markup=kb)
+        return
+
+    end_date = datetime.strptime(environ.get(
+        'STOP_WHAT_IS_NEW'), '%Y-%m-%d %H:%M:%S')
+
+    if datetime.now() <= end_date:
+        bot.send_message(u_id, localization['what_is_new'])
 
     else:
-        bot.send_message(u.id, config['BOT']['START'])
-
-    logging.info('/start from %s:%s', u.id, user_str)
+        bot.send_message(u_id, localization['help'])
 
 
 @bot.message_handler(commands=['help'])
-def help_menu(message: types.Message):
-    u = message.chat
-    user = find_by_telegram_id(db, user_query, u.id)
-    user_str = generate_user_str(u)
+def on_help(message: types.Message):
+    bot.reply_to(message, localization['help'])
 
-    if not user:
-        bot.send_message(u.id, config['BOT']['NOT_USER'])
+
+@bot.message_handler(commands=['new'])
+def on_new(message: types.Message):
+    u_id = message.from_user.id
+    bot.send_message(u_id, localization['what_is_new'])
+
+
+@bot.message_handler(commands=["ping"])
+def on_ping(message: types.Message):
+    bot.reply_to(message, localization['ping'])
+
+
+@bot.message_handler(commands=['profile'])
+def on_profile(message: types.Message):
+    u_id = message.from_user.id
+    api_url = environ.get('API_URL')
+
+    res = graphql_request(api_url,
+                          telegramToUserId.format(u_id),
+                          telegram_id=u_id)
+
+    if res.get('errors', None):
+        bot.reply_to(message, localization['register_first'])
         return
 
-    bot.send_message(u.id, config['BOT']['HELP'])
-    logging.info('/help from %s:%s', u.id, user_str)
+    internal_id = res['data']['telegramToUserId']
+
+    res = graphql_request(api_url,
+                          profile.format(internal_id), telegram_id=u_id)['data']['user']
+
+    user_data = {
+        'name': res['name'],
+        'money': res['money'],
+        'transactions': len(res['transactions']),
+    }
+
+    text_response = localization['profile'].format(**user_data)
+
+    if res['is_admin']:
+        text_response += localization['profile_admin'].format(res['is_admin'])
+
+    bot.send_message(u_id, text_response)
 
 
-@bot.message_handler(commands=['me'])
-def profile(message: types.Message):
-    u = message.chat
-    user = find_by_telegram_id(db, user_query, u.id)
-    user_str = generate_user_str(u)
+@bot.message_handler(commands=['transactions'])
+def on_transactions(message: types.Message):
+    u_id = message.from_user.id
+    res = get_transactions(telegram_id=u_id)
 
-    if not user:
-        bot.send_message(u.id, config['BOT']['NOT_USER'])
+    if not res:
+        bot.reply_to(message, localization['register_first'])
         return
 
-    r = graphql_request(
-        db, user_query, config['API_ADDR'], u.id,
-        queries.profile.format(user['db_id']))
+    text_response = localization['transaction_list_title']
 
-    bot.send_message(u.id, generate_profile(
-        r['data']['user']), parse_mode='Markdown')
+    for t in res['transactions']:
+        user1, user2 = '', ''
 
-    logging.info('/me from %s:%s', u.id, user_str)
-
-
-@bot.message_handler(commands=['my_transactions'])
-def transactions(message: types.Message):
-    u = message.chat
-    user = find_by_telegram_id(db, user_query, u.id)
-    user_str = generate_user_str(u)
-
-    base = 'Transactions:\n'
-
-    if not user:
-        bot.send_message(u.id, config['BOT']['NOT_USER'])
-        return
-
-    r = graphql_request(db, user_query, config['API_ADDR'],
-                        u.id, queries.profile.format(user['db_id']))
-    transactions = r['data']['user']['transactions']
-
-    if not transactions:
-        base += 'Empty...'
-
-    for t in transactions:
-        if not t:
-            continue
-
-        if not t['toUser']:
-            base += ' ~ {} brocoins from *{}*\n'.format(
-                abs(t['money']), t['fromUser']['name'])
-            base += '   _~~ {}_\n'.format(t['message']) if t['message'] else ''
+        if not t['fromUser']['username']:
+            user1 = t['fromUser']['name']
 
         else:
-            base += ' ~ *{}* sent {} brocoins to *{}*\n'.format(
-                t['fromUser']['name'], t['money'], t['toUser']['name'])
-            base += '   _~~ {}_\n'.format(t['message']) if t['message'] else ''
+            user1 = '@' + t['fromUser']['username']
 
-    bot.send_message(u.id, base, parse_mode='Markdown')
-    logging.info('/my_transactions from %s:%s', u.id, user_str)
+        if not t['toUser']['username']:
+            user2 = t['toUser']['name']
+
+        else:
+            user2 = '@' + t['toUser']['username']
+
+        text_response += localization['transaction_list_item'].format(
+            t['money'], user1, user2, t['message'] if t['message'] else 'no message')
+
+    if not len(res['transactions']):
+        text_response += localization['empty_list']
+
+    bot.reply_to(message, text_response)
 
 
-@bot.message_handler(commands=['change_subscription', 'change_subs'])
-def change_subsription(message: types.Message):
-    u = message.chat
-    user_str = generate_user_str(u)
+@bot.message_handler(commands=['stats'])
+def on_stats(message: types.Message):
+    u_id = str(message.from_user.id)
+    res = get_transactions(telegram_id=u_id)
 
-    user = find_by_telegram_id(db, user_query, u.id)
-
-    if not user:
-        bot.send_message(u.id, config['BOT']['NOT_USER'])
+    if not res:
+        bot.reply_to(message, localization['register_first'])
         return
 
-    r = graphql_request(
-        db, user_query, config['API_ADDR'], u.id,
-        queries.subscriptions)
+    stats = {
+        'expenses': 0,
+        'income': 0,
+        'top_ex': 0,
+        'top_in': 0,
+        'transactions': 0
+    }
 
-    subs = types.InlineKeyboardMarkup(row_width=1)
+    stats['transactions'] = len(res['transactions'])
 
-    for sub in r['data']['subscriptions']:
-        if not sub['limit']:
-            sub['limit'] = 'Unlimited'
+    for t in res['transactions']:
+        if t['fromUser']['telegram_id'] == u_id:
+            stats['expenses'] += t['money']
+            stats['top_ex'] = t['money'] if t['money'] > stats['top_ex'] else stats['top_ex']
 
-        subs.row(
-            types.InlineKeyboardButton(
-                text='{name} - {cost} - {limit}'.format(**sub),
-                callback_data='change_sub:{}'.format(sub['id'])
-            )
-        )
+        if t['toUser']['telegram_id'] == u_id:
+            stats['income'] += t['money']
+            stats['top_in'] = t['money'] if t['money'] > stats['top_in'] else stats['top_in']
 
-    bot.send_message(
-        u.id,
-        'Choose one of these:\n_name_ - _cost_ - _limit_',
-        reply_markup=subs,
-        parse_mode='Markdown')
-    logging.info('/change_subscription from %s:%s', u.id, user_str)
-
-
-@bot.message_handler(commands=['ping'])
-def ping(message: types.Message):
-    u = message.chat
-    user_str = generate_user_str(u)
-    bot.reply_to(message, 'Pong!')
-    logging.info('/ping from %s:%s', u.id, user_str)
+    bot.reply_to(message, localization['stats'].format(**stats))
 
 
 @bot.callback_query_handler(func=lambda call: True)
-def inline_button(callback: types.CallbackQuery):
-    u = callback.from_user
-    user = find_by_telegram_id(db, user_query, u.id)
-    user_str = generate_user_str(u)
+def on_callback_query(query: types.CallbackQuery):
+    u_id = query.from_user.id
+    user_str = get_user_str(query.from_user)
 
-    title = callback.data.split(':')[0]
-    val = callback.data.split(':')[1:]
+    title = query.data.split(';')[0]
+    value = query.data.split(';')[1:]
 
-    logging.info('Callback data "%s" from %s:%s',
-                 callback.data, u.id, user_str)
+    if title == 'register':
+        if value[0] == '1':
+            user_data = {
+                'name': user_str,
+                'telegram_id': u_id,
+                'username': query.from_user.username
+            }
 
-    if title == 'register' and val[0] == '1':
-        user = {
-            'name': user_str,
-            'telegram_id': u.id
-        }
+            requests.post(environ.get('API_URL') +
+                          '/register', data=user_data).json()
 
-        r = requests.post(config['API_ADDR'] + '/register', data=user).json()
-        db.insert({'name': user_str, 'telegram_id': u.id, 'db_id': r['_id']})
-        login(db, user_query, config['API_ADDR'], u.id)
-
-        bot.edit_message_text(
-            config['BOT']['SUCCESS_REG'],
-            u.id,
-            callback.message.message_id)
-
-    if title == 'register' and val[0] == '0':
-        bot.edit_message_text(
-            config['BOT']['CANCEL_REG'],
-            u.id,
-            callback.message.message_id)
-
-    if not user:
-        bot.answer_callback_query(callback.id, 'You\'re not registered!')
-        return
-
-    if title == 'receive_money' and val:
-        if val[1] == user['db_id']:
-            bot.answer_callback_query(callback.id, 'You can\'t do that!')
-            return
-
-        r = db.search(user_query.db_id == val[1])[0]
-
-        r = graphql_request(
-            db, user_query, config['API_ADDR'], r['telegram_id'],
-            queries.transfer.format(val[0], val[1], user['db_id'], val[2]))
-
-        if r.get('errors', None):
             bot.edit_message_text(
-                r['errors'][0]['message'],
-                inline_message_id=callback.inline_message_id
-            )
+                localization['register_success'], u_id, query.message.message_id)
+
+            end_date = datetime.strptime(environ.get(
+                'STOP_WHAT_IS_NEW'), '%Y-%m-%d %H:%M:%S')
+            if datetime.now() <= end_date:
+                bot.send_message(u_id, localization['what_is_new'])
+
+            time.sleep(1)
+            bot.send_message(u_id, localization['try_help'])
 
         else:
             bot.edit_message_text(
-                config['BOT']['SUCCESS'],
-                inline_message_id=callback.inline_message_id
-            )
+                localization['register_cancel'], u_id, query.message.message_id)
 
-    if title == 'give_money' and val:
-        if val[1] == user['db_id']:
-            bot.answer_callback_query(
-                callback.id, 'You can\'t do that!')
+    elif title == 'give':
+        if str(u_id) == value[0]:
+            bot.answer_callback_query(query.id, localization['cannot'])
             return
 
-        r = db.search(user_query.db_id == val[1])[0]
+        from_user_id = graphql_request(environ.get('API_URL'),
+                                       telegramToUserId.format(value[0]),
+                                       telegram_id=value[0])['data']['telegramToUserId']
 
-        r = graphql_request(
-            db, user_query, config['API_ADDR'], user['telegram_id'],
-            queries.transfer.format(val[0], user['db_id'], val[1], val[2]))
+        res = get_transactions(user_id=from_user_id)
 
-        if r.get('errors', None):
+        for t in res['transactions']:
+            if t['queryId'] == query.inline_message_id:
+                return
+
+        to_user_id = graphql_request(environ.get('API_URL'),
+                                     telegramToUserId.format(u_id),
+                                     telegram_id=u_id)
+
+        if to_user_id.get('errors', None):
             bot.edit_message_text(
-                r['errors'][0]['message'],
-                inline_message_id=callback.inline_message_id
+                localization['register_first'],
+                inline_message_id=query.inline_message_id
             )
+            bot.reply_to()
+            return
 
-        else:
-            bot.edit_message_text(
-                config['BOT']['SUCCESS'],
-                inline_message_id=callback.inline_message_id
-            )
+        to_user_id = to_user_id['data']['telegramToUserId']
 
-    if title == 'cancel_request':
+        res = graphql_request(environ.get('API_URL'), transfer.format(
+            value[1], from_user_id, to_user_id, value[2], query.inline_message_id), telegram_id=value[0])
+
+        if res.get('errors', None):
+            bot.answer_callback_query(query.id, res['errors'][0]['message'])
+            return
+
         bot.edit_message_text(
-            config['BOT']['CANCEL_TRANSFER'],
-            inline_message_id=callback.inline_message_id
+            localization['transaction_success'].format(value[1]),
+            inline_message_id=query.inline_message_id
         )
 
-    if title == 'change_sub':
-        r = graphql_request(
-            db, user_query, config['API_ADDR'], user['telegram_id'],
-            queries.change_subscription.format(val[0], user['db_id']))
+        name = '@' + \
+            query.from_user.username if query.from_user.username else get_user_str(
+                query.from_user)
 
-        if r.get('errors', None):
+        bot.send_message(
+            value[0], localization['notification_give'].format(value[1], name))
+
+    elif title == 'recv':
+        if str(u_id) == value[0]:
+            bot.answer_callback_query(query.id, localization['cannot'])
+            return
+
+        from_user_id = graphql_request(environ.get('API_URL'),
+                                       telegramToUserId.format(u_id),
+                                       telegram_id=u_id)
+
+        if from_user_id.get('errors', None):
             bot.edit_message_text(
-                r['errors'][0]['message'],
-                u.id,
-                callback.message.message_id)
+                localization['register_first'],
+                inline_message_id=query.inline_message_id
+            )
+            return
 
-        else:
-            bot.edit_message_text(
-                config['BOT']['SUCCESS'],
-                u.id,
-                callback.message.message_id)
+        from_user_id = from_user_id['data']['telegramToUserId']
+        res = get_transactions(user_id=from_user_id)
+
+        for t in res['transactions']:
+            if t['queryId'] == query.inline_message_id:
+                return
+
+        to_user_id = graphql_request(environ.get('API_URL'),
+                                     telegramToUserId.format(value[0]),
+                                     telegram_id=value[0])['data']['telegramToUserId']
+
+        res = graphql_request(environ.get('API_URL'), transfer.format(
+            value[1], from_user_id, to_user_id, value[2], query.inline_message_id), telegram_id=u_id)
+
+        if res.get('errors', None):
+            bot.answer_callback_query(query.id, res['errors'][0]['message'])
+            return
+
+        bot.edit_message_text(
+            localization['transaction_success'].format(value[1]),
+            inline_message_id=query.inline_message_id
+        )
+
+        name = '@' + \
+            query.from_user.username if query.from_user.username else get_user_str(
+                query.from_user)
+
+        bot.send_message(
+            value[0], localization['notification_request'].format(name, value[1]))
+
+    elif title == 'cancel_request':
+        if str(query.from_user.id) != value[0]:
+            bot.answer_callback_query(query.id, localization['cannot'])
+            return
+
+        bot.edit_message_text(
+            localization['transaction_cancel'],
+            inline_message_id=query.inline_message_id
+        )
 
 
-@bot.inline_handler(func=lambda query: len(query.query) is 0)
+@bot.inline_handler(func=lambda query: len(query.query) == 0)
 def empty_query(query: types.InlineQuery):
-    u = query.from_user
-    user_str = generate_user_str(u)
+    u_id = query.from_user.id
+    api_url = environ.get('API_URL')
 
-    logging.info('Empty query from %s:%s', u.id, user_str)
+    res = graphql_request(api_url,
+                          telegramToUserId.format(u_id),
+                          telegram_id=u_id)
 
-    r = types.InlineQueryResultArticle(
+    if res.get('errors', None):
+        on_inline_not_registered(query)
+        return
+
+    internal_id = res['data']['telegramToUserId']
+    res = graphql_request(api_url,
+                          profile.format(internal_id), telegram_id=u_id)['data']['user']
+    money = res['money']
+
+    balance = types.InlineQueryResultArticle(
         id='1',
-        title='Enter amount of brocoins',
-        description='and choose one of operations above',
+        title=localization['inline_mode']['balance']['title'].format(money),
+        description=localization['inline_mode']['balance']['description'],
         input_message_content=types.InputTextMessageContent(
-            message_text='Amount of brocoins wasn\'t entered!'),
-        thumb_url='https://i.imgur.com/saDPT92.png'
+            message_text=localization['inline_mode']['balance']['message_text'].format(money)),
+        thumb_url=localization['inline_mode']['balance']['thumb_url']
     )
-    bot.answer_inline_query(query.id, [r])
+
+    instructions = types.InlineQueryResultArticle(
+        id='2',
+        title=localization['inline_mode']['empty']['title'],
+        description=localization['inline_mode']['empty']['description'],
+        input_message_content=types.InputTextMessageContent(
+            message_text=localization['inline_mode']['empty']['message_text']),
+        thumb_url=localization['inline_mode']['empty']['thumb_url']
+    )
+
+    bot.answer_inline_query(
+        query.id, [balance, instructions], cache_time=environ.get('INLINE_QUERY_CACHE_TIME'))
 
 
 @bot.inline_handler(func=lambda query: len(query.query))
 def answer_query(query: types.InlineQuery):
-    u = query.from_user
-    user = find_by_telegram_id(db, user_query, u.id)
+    u_id = query.from_user.id
+    api_url = environ.get('API_URL')
 
-    if not user:
+    res = graphql_request(api_url,
+                          telegramToUserId.format(u_id),
+                          telegram_id=u_id)
+
+    if res.get('errors', None):
+        on_inline_not_registered(query)
         return
+
+    internal_id = res['data']['telegramToUserId']
+    res = graphql_request(api_url,
+                          profile.format(internal_id), telegram_id=u_id)['data']['user']
+    money = res['money']
 
     try:
         matches = re.match(r'(\d+)? ?(.*)', query.query)
@@ -298,65 +363,134 @@ def answer_query(query: types.InlineQuery):
     except AttributeError:
         return
 
-    if not num:
+    if not num or int(num) <= 0:
         empty_query(query)
         return
 
-    give_kb = types.InlineKeyboardMarkup()
-    give_kb.row(
-        types.InlineKeyboardButton(
-            'Receive', callback_data='receive_money:{}:{}:{}'.format(num, user['db_id'], message)),
-        types.InlineKeyboardButton('Cancel', callback_data='cancel_request')
-    )
+    num = int(num)
+    test = len('xxxx;{};{};{}'.format(u_id, num, message).encode('utf-8'))
 
-    give = types.InlineQueryResultArticle(
-        id='1',
+    if test > 64:
+        on_callback_data_overflow(query)
+        return
 
-        title='Send {} brocoins'.format(num),
+    if num >= (2**32 - 1):
+        on_integer_overflow(query)
+        return
 
-        description=('Message: {}'.format(message)
-                     if message else 'No message provided'),
+    if num > money:
+        give = types.InlineQueryResultArticle(
+            id='2',
+            title=localization['inline_mode']['not_enough']['title'],
+            description=localization['inline_mode']['not_enough']['description'],
+            input_message_content=types.InputTextMessageContent(
+                message_text=localization['inline_mode']['not_enough']['message_text']),
+            thumb_url=localization['inline_mode']['not_enough']['thumb_url']
+        )
 
-        input_message_content=types.InputTextMessageContent(
-            message_text='Get your {} brocoins!'.format(num) +
-            ('\nMessage: _{}_'.format(message) if message else ''),
-            parse_mode='Markdown'),
+    else:
+        give_kb = types.InlineKeyboardMarkup()
+        give_kb.row(
+            types.InlineKeyboardButton(
+                localization['inline_keyboard']['receive'], callback_data='give;{};{};{}'.format(u_id, num, message)),
+            types.InlineKeyboardButton(
+                localization['inline_keyboard']['cancel'], callback_data='cancel_request;{}'.format(u_id))
+        )
 
-        reply_markup=give_kb,
+        give = types.InlineQueryResultArticle(
+            id='2',
+            title=localization['inline_mode']['give']['title'].format(num),
+            description=(localization['inline_mode']['give']['description'].format(message)
+                         if message else localization['inline_mode']['no_message']),
 
-        thumb_url='https://i.imgur.com/f2f4fJu.png'
-    )
+            input_message_content=types.InputTextMessageContent(
+                message_text=localization['inline_mode']['give']['message_text'].format(num) +
+                (localization['inline_mode']['message_text_trans_message'].format(
+                    message) if message else ''),
+                parse_mode='HTML'),
+
+            reply_markup=give_kb,
+            thumb_url=localization['inline_mode']['give']['thumb_url']
+        )
 
     ask_kb = types.InlineKeyboardMarkup()
     ask_kb.row(
         types.InlineKeyboardButton(
-            'Give', callback_data='give_money:{}:{}:{}'.format(num, user['db_id'], message)),
-        types.InlineKeyboardButton('Cancel', callback_data='cancel_request')
+            localization['inline_keyboard']['give'], callback_data='recv;{};{};{}'.format(u_id, num, message)),
+        types.InlineKeyboardButton(
+            localization['inline_keyboard']['cancel'], callback_data='cancel_request;{}'.format(u_id))
     )
 
     ask = types.InlineQueryResultArticle(
-        id='2',
-
-        title='Request {} brocoins'.format(num),
-
-        description=('Message: {}'.format(message)
-                     if message else 'No message provided'),
+        id='3',
+        title=localization['inline_mode']['request']['title'].format(num),
+        description=(localization['inline_mode']['request']['description'].format(message)
+                     if message else localization['inline_mode']['no_message']),
 
         input_message_content=types.InputTextMessageContent(
-            message_text='Send me {} brocoins!'.format(num) +
-            ('\nMessage: _{}_'.format(message) if message else ''),
-            parse_mode='Markdown'),
+            message_text=localization['inline_mode']['request']['message_text'].format(num) +
+            (localization['inline_mode']['message_text_trans_message'].format(
+                message) if message else ''),
+            parse_mode='HTML'),
 
         reply_markup=ask_kb,
-
-        thumb_url='https://i.imgur.com/XYDwkVZ.png'
+        thumb_url=localization['inline_mode']['request']['thumb_url']
     )
-    bot.answer_inline_query(query.id, [give, ask])
+
+    balance = types.InlineQueryResultArticle(
+        id='1',
+        title=localization['inline_mode']['balance']['title'].format(money),
+        description=localization['inline_mode']['balance']['description'],
+        input_message_content=types.InputTextMessageContent(
+            message_text=localization['inline_mode']['balance']['message_text'].format(money)),
+        thumb_url=localization['inline_mode']['balance']['thumb_url']
+    )
+
+    bot.answer_inline_query(
+        query.id, [balance, give, ask], cache_time=environ.get('INLINE_QUERY_CACHE_TIME'))
+
+
+def on_inline_not_registered(query: types.InlineQuery):
+    r = types.InlineQueryResultArticle(
+        id='1',
+        title=localization['inline_mode']['not_registered']['title'],
+        description=localization['inline_mode']['not_registered']['description'],
+        input_message_content=types.InputTextMessageContent(
+            message_text=localization['inline_mode']['not_registered']['message_text']),
+        thumb_url=localization['inline_mode']['not_registered']['thumb_url']
+    )
+
+    bot.answer_inline_query(
+        query.id, [r], cache_time=environ.get('INLINE_QUERY_CACHE_TIME'))
+
+
+def on_callback_data_overflow(query: types.InlineQuery):
+    r = types.InlineQueryResultArticle(
+        id='1',
+        title=localization['inline_mode']['message_overflow']['title'],
+        description=localization['inline_mode']['message_overflow']['description'],
+        input_message_content=types.InputTextMessageContent(
+            message_text=localization['inline_mode']['message_overflow']['message_text']),
+        thumb_url=localization['inline_mode']['message_overflow']['thumb_url']
+    )
+
+    bot.answer_inline_query(
+        query.id, [r], cache_time=environ.get('INLINE_QUERY_CACHE_TIME'))
+
+
+def on_integer_overflow(query: types.InlineQuery):
+    r = types.InlineQueryResultArticle(
+        id='1',
+        title=localization['inline_mode']['integer_overflow']['title'],
+        description=localization['inline_mode']['integer_overflow']['description'],
+        input_message_content=types.InputTextMessageContent(
+            message_text=localization['inline_mode']['integer_overflow']['message_text']),
+        thumb_url=localization['inline_mode']['integer_overflow']['thumb_url']
+    )
+
+    bot.answer_inline_query(
+        query.id, [r], cache_time=environ.get('INLINE_QUERY_CACHE_TIME'))
 
 
 if __name__ == '__main__':
-    while True:
-        try:
-            bot.polling(none_stop=True)
-        except Exception as e:
-            logging.warning(e)
+    bot.polling(none_stop=True)

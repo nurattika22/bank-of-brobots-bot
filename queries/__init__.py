@@ -1,43 +1,41 @@
 profile = '''query {{
-    user(id: "{0}") {{
+    user(id: "{}") {{
         name
         money
-        planName
-        planCost
-        weekLeft
-        weekLimit
-        isAdmin
+        is_admin
         transactions {{
             id
-            money
-            fromUser {{
-                name
-            }}
-            toUser {{
-                name
-            }}
-            message
         }}
     }}
 }}'''
 
-transfer = '''mutation {{
-    transfer(money: {}, from_user_id: "{}", to_user_id: "{}", message: "{}") {{
-        id
+transactions = '''query {{
+    user(id: "{}") {{
+        transactions {{
+            money
+            fromUser {{
+                telegram_id
+                name
+                username
+            }}
+            toUser {{
+                telegram_id
+                name
+                username
+            }}
+            message
+            queryId
+        }}
     }}
 }}'''
 
-subscriptions = '''query {
-    subscriptions {
-        id
-        name
-        cost
-        limit
-    }
-}'''
+telegramToUserId = '''query {{
+    telegramToUserId(telegram_id: "{}")
+}}
+'''
 
-change_subscription = '''mutation {{
-    changeSubscription(subscriptionId: {}, userId: "{}") {{
-        name
+transfer = '''mutation {{
+    transfer(money: {}, from_user_id: "{}", to_user_id: "{}", message: "{}", query_id: "{}") {{
+        id
     }}
 }}'''

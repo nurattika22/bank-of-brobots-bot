@@ -62,42 +62,50 @@ localization = {
             'empty': {
                 'title': '💵 Enter amount of brocoins',
                 'description': 'and choose one of operations above',
-                'message_text': '❌ Amount of brocoins wasn\'t entered!'
+                'message_text': '❌ Amount of brocoins wasn\'t entered!',
+                'thumb_url': 'https://i.imgur.com/saDPT92.png'
             },
             'not_registered': {
                 'title': '❌ You\'re not registered!',
                 'description': '',
-                'message_text': '❌ User is not registered!'
+                'message_text': '❌ User is not registered!',
+                'thumb_url': ''
             },
             'message_overflow': {
                 'title': '❌ Message is too long!',
                 'description': '',
-                'message_text': '❌ Message is too long!'
+                'message_text': '❌ Message is too long!',
+                'thumb_url': ''
             },
             'integer_overflow': {
                 'title': '❌ Integer is too big!',
                 'description': '',
-                'message_text': '❌ Integer is too big!'
+                'message_text': '❌ Integer is too big!',
+                'thumb_url': ''
             },
             'not_enough': {
                 'title': '❌ Not enough money!',
                 'description': '',
-                'message_text': '❌ Not enough money!'
+                'message_text': '❌ Not enough money!',
+                'thumb_url': ''
             },
             'balance': {
                 'title': '{} brocoins on account',
                 'description': 'Touch to share your balance',
-                'message_text': 'I have {} bc'
+                'message_text': 'I have {} bc',
+                'thumb_url': ''
             },
             'give': {
                 'title': 'Send {} brocoins',
                 'description': 'Message: {}',
-                'message_text': 'Receive your {} brocoins!'
+                'message_text': 'Receive your {} brocoins!',
+                'thumb_url': 'https://i.imgur.com/f2f4fJu.png'
             },
             'request': {
                 'title': 'Request {} brocoins',
                 'description': 'Message: {}',
                 'message_text': 'Send me {} brocoins!',
+                'thumb_url': 'https://i.imgur.com/XYDwkVZ.png'
             }
         },
 

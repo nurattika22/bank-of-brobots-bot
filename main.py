@@ -322,6 +322,7 @@ def empty_query(query: types.InlineQuery):
         description=localization['inline_mode']['balance']['description'],
         input_message_content=types.InputTextMessageContent(
             message_text=localization['inline_mode']['balance']['message_text'].format(money)),
+        thumb_url=localization['inline_mode']['balance']['thumb_url']
     )
 
     instructions = types.InlineQueryResultArticle(
@@ -330,7 +331,7 @@ def empty_query(query: types.InlineQuery):
         description=localization['inline_mode']['empty']['description'],
         input_message_content=types.InputTextMessageContent(
             message_text=localization['inline_mode']['empty']['message_text']),
-        thumb_url='https://i.imgur.com/saDPT92.png'
+        thumb_url=localization['inline_mode']['empty']['thumb_url']
     )
 
     bot.answer_inline_query(
@@ -384,7 +385,7 @@ def answer_query(query: types.InlineQuery):
             description=localization['inline_mode']['not_enough']['description'],
             input_message_content=types.InputTextMessageContent(
                 message_text=localization['inline_mode']['not_enough']['message_text']),
-            thumb_url='https://i.imgur.com/f2f4fJu.png'
+            thumb_url=localization['inline_mode']['not_enough']['thumb_url']
         )
 
     else:
@@ -409,7 +410,7 @@ def answer_query(query: types.InlineQuery):
                 parse_mode='HTML'),
 
             reply_markup=give_kb,
-            thumb_url='https://i.imgur.com/f2f4fJu.png'
+            thumb_url=localization['inline_mode']['give']['thumb_url']
         )
 
     ask_kb = types.InlineKeyboardMarkup()
@@ -433,7 +434,7 @@ def answer_query(query: types.InlineQuery):
             parse_mode='HTML'),
 
         reply_markup=ask_kb,
-        thumb_url='https://i.imgur.com/XYDwkVZ.png'
+        thumb_url=localization['inline_mode']['request']['thumb_url']
     )
 
     balance = types.InlineQueryResultArticle(
@@ -442,6 +443,7 @@ def answer_query(query: types.InlineQuery):
         description=localization['inline_mode']['balance']['description'],
         input_message_content=types.InputTextMessageContent(
             message_text=localization['inline_mode']['balance']['message_text'].format(money)),
+        thumb_url=localization['inline_mode']['balance']['thumb_url']
     )
 
     bot.answer_inline_query(
@@ -454,7 +456,8 @@ def on_inline_not_registered(query: types.InlineQuery):
         title=localization['inline_mode']['not_registered']['title'],
         description=localization['inline_mode']['not_registered']['description'],
         input_message_content=types.InputTextMessageContent(
-            message_text=localization['inline_mode']['not_registered']['message_text'])
+            message_text=localization['inline_mode']['not_registered']['message_text']),
+        thumb_url=localization['inline_mode']['not_registered']['thumb_url']
     )
 
     bot.answer_inline_query(
@@ -467,7 +470,8 @@ def on_callback_data_overflow(query: types.InlineQuery):
         title=localization['inline_mode']['message_overflow']['title'],
         description=localization['inline_mode']['message_overflow']['description'],
         input_message_content=types.InputTextMessageContent(
-            message_text=localization['inline_mode']['message_overflow']['message_text'])
+            message_text=localization['inline_mode']['message_overflow']['message_text']),
+        thumb_url=localization['inline_mode']['message_overflow']['thumb_url']
     )
 
     bot.answer_inline_query(
@@ -480,7 +484,8 @@ def on_integer_overflow(query: types.InlineQuery):
         title=localization['inline_mode']['integer_overflow']['title'],
         description=localization['inline_mode']['integer_overflow']['description'],
         input_message_content=types.InputTextMessageContent(
-            message_text=localization['inline_mode']['integer_overflow']['message_text'])
+            message_text=localization['inline_mode']['integer_overflow']['message_text']),
+        thumb_url=localization['inline_mode']['integer_overflow']['thumb_url']
     )
 
     bot.answer_inline_query(

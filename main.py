@@ -17,7 +17,7 @@ load_config()
 localization = localization['en']
 
 bot = telebot.AsyncTeleBot(environ.get(
-    'TELEGRAM_API_TOKEN_DEV'), parse_mode='HTML')
+    'TELEGRAM_API_TOKEN'), parse_mode='HTML')
 
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)

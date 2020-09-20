@@ -60,52 +60,52 @@ localization = {
             'message_text_trans_message': '\nMessage: <i>{}</i>',
             'no_message': 'No message provided',
             'empty': {
-                'title': '💵 Enter amount of brocoins',
+                'title': 'Enter amount of brocoins',
                 'description': 'and choose one of operations above',
                 'message_text': '❌ Amount of brocoins wasn\'t entered!',
-                'thumb_url': 'https://i.imgur.com/saDPT92.png'
+                'thumb_url': 'https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/apple/237/keyboard_2328.png'
             },
             'not_registered': {
-                'title': '❌ You\'re not registered!',
+                'title': 'You\'re not registered!',
                 'description': '',
                 'message_text': '❌ User is not registered!',
-                'thumb_url': ''
+                'thumb_url': 'https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/apple/237/cross-mark_274c.png'
             },
             'message_overflow': {
-                'title': '❌ Message is too long!',
+                'title': 'Message is too long!',
                 'description': '',
                 'message_text': '❌ Message is too long!',
-                'thumb_url': ''
+                'thumb_url': 'https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/apple/237/cross-mark_274c.png'
             },
             'integer_overflow': {
-                'title': '❌ Integer is too big!',
+                'title': 'Integer is too big!',
                 'description': '',
                 'message_text': '❌ Integer is too big!',
-                'thumb_url': ''
+                'thumb_url': 'https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/apple/237/cross-mark_274c.png'
             },
             'not_enough': {
-                'title': '❌ Not enough money!',
+                'title': 'Not enough money to give!',
                 'description': '',
-                'message_text': '❌ Not enough money!',
-                'thumb_url': ''
+                'message_text': '🚫 Not enough money!',
+                'thumb_url': 'https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/apple/237/no-entry-sign_1f6ab.png'
             },
             'balance': {
                 'title': '{} brocoins on account',
                 'description': 'Touch to share your balance',
                 'message_text': 'I have {} bc',
-                'thumb_url': ''
+                'thumb_url': 'https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/apple/237/money-bag_1f4b0.png'
             },
             'give': {
                 'title': 'Send {} brocoins',
                 'description': 'Message: {}',
                 'message_text': 'Receive your {} brocoins!',
-                'thumb_url': 'https://i.imgur.com/f2f4fJu.png'
+                'thumb_url': 'https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/apple/237/white-right-pointing-backhand-index_1f449.png'
             },
             'request': {
                 'title': 'Request {} brocoins',
                 'description': 'Message: {}',
                 'message_text': 'Send me {} brocoins!',
-                'thumb_url': 'https://i.imgur.com/XYDwkVZ.png'
+                'thumb_url': 'https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/apple/237/palms-up-together_1f932.png'
             }
         },
 

@@ -1,3 +1,23 @@
-# Bank of Brobots Bot
+# Bank of #brobots Telegram bot
 
-Telegram bot for Bank of Brobots. You can send your **brocoins** to others.
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/andrew4ever/bank-of-brobots-bot)
+
+Telegram bot for Bank of #brobots. Send and receive your **brocoins** easily!
+
+## What's new in 2.0
+
+- Weekly limit is cancelled! 🎉
+- Performance increased! 🚀
+- Track your expenses and income! 💹
+- Get notifications when someone accepts your offer! 🔔
+- Bugfixes! 🐛
+
+## Stack
+
+We use:
+
+- `pyTelegramBotAPI`
+- `requests`
+- _GraphQL_ as data query language
+
+## [Bank of #brobots API on GitHub](https://github.com/andrew4ever/bank-of-brobots-api)

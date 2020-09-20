@@ -15,7 +15,7 @@ localization = {
                        u'- Performance increased! 🚀\n'
                        u'- Track your expenses and income! 💹\n'
                        u'    = use /stats\n'
-                       u'- Get notifications when someone accepts your offer! 🔔'
+                       u'- Get notifications when someone accepts your offer! 🔔\n'
                        u'- Bugfixes! 🐛\n',
 
         'stats': u'<b>Your stats</b>\n'

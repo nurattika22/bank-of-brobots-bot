@@ -1,3 +1,4 @@
+import logging
 import re
 import time
 from datetime import datetime
@@ -10,7 +11,7 @@ from telebot import types
 from common import get_user_str, load_config, user_exists, yesno_keyboard
 from localization import localization
 from queries import profile, telegramToUserId, transactions, transfer
-from services import graphql_request, get_transactions
+from services import get_transactions, graphql_request
 
 load_config()
 localization = localization['en']
@@ -18,10 +19,18 @@ localization = localization['en']
 bot = telebot.AsyncTeleBot(environ.get(
     'TELEGRAM_API_TOKEN_DEV'), parse_mode='HTML')
 
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+
+logging.basicConfig(filename=environ.get('LOGGING_FILENAME'),
+                    format=environ.get('LOGGING_FORMAT'),
+                    level=logging.INFO)
+
 
 @bot.message_handler(commands=['start'])
 def on_start(message: types.Message):
     u_id = message.from_user.id
+    logging.debug('/start from %s', u_id)
 
     bot.reply_to(message, localization['start'])
     bot.send_chat_action(u_id, 'typing')
@@ -48,17 +57,20 @@ def on_start(message: types.Message):
 @bot.message_handler(commands=['help'])
 def on_help(message: types.Message):
     bot.reply_to(message, localization['help'])
+    logging.debug('/help from %s', message.from_user.id)
 
 
 @bot.message_handler(commands=['new'])
 def on_new(message: types.Message):
     u_id = message.from_user.id
     bot.send_message(u_id, localization['what_is_new'])
+    logging.debug('/new from %s', u_id)
 
 
 @bot.message_handler(commands=["ping"])
 def on_ping(message: types.Message):
     bot.reply_to(message, localization['ping'])
+    logging.debug('/ping from %s', message.from_user.id)
 
 
 @bot.message_handler(commands=['profile'])
@@ -91,6 +103,7 @@ def on_profile(message: types.Message):
         text_response += localization['profile_admin'].format(res['is_admin'])
 
     bot.send_message(u_id, text_response)
+    logging.debug('/profile from %s', u_id)
 
 
 @bot.message_handler(commands=['transactions'])
@@ -126,6 +139,7 @@ def on_transactions(message: types.Message):
         text_response += localization['empty_list']
 
     bot.reply_to(message, text_response)
+    logging.debug('/transactions from %s', u_id)
 
 
 @bot.message_handler(commands=['stats'])
@@ -157,6 +171,7 @@ def on_stats(message: types.Message):
             stats['top_in'] = t['money'] if t['money'] > stats['top_in'] else stats['top_in']
 
     bot.reply_to(message, localization['stats'].format(**stats))
+    logging.debug('/stats from %s', u_id)
 
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -166,6 +181,8 @@ def on_callback_query(query: types.CallbackQuery):
 
     title = query.data.split(';')[0]
     value = query.data.split(';')[1:]
+
+    logging.debug('%s callback from %s', title, u_id)
 
     if title == 'register':
         if value[0] == '1':
@@ -226,8 +243,13 @@ def on_callback_query(query: types.CallbackQuery):
             value[1], from_user_id, to_user_id, value[2], query.inline_message_id), telegram_id=value[0])
 
         if res.get('errors', None):
+            logging.warning(
+                'transaction for %s bc failed from %s', value[1], u_id)
             bot.answer_callback_query(query.id, res['errors'][0]['message'])
             return
+
+        logging.info(
+            'successful transaction for %s bc from %s to %s', value[1], value[0], u_id)
 
         bot.edit_message_text(
             localization['transaction_success'].format(value[1]),
@@ -272,8 +294,13 @@ def on_callback_query(query: types.CallbackQuery):
             value[1], from_user_id, to_user_id, value[2], query.inline_message_id), telegram_id=u_id)
 
         if res.get('errors', None):
+            logging.warning(
+                'transaction for %s bc failed from %s', value[1], u_id)
             bot.answer_callback_query(query.id, res['errors'][0]['message'])
             return
+
+        logging.info(
+            'successful transaction for %s bc from %s to %s', value[1], value[0], u_id)
 
         bot.edit_message_text(
             localization['transaction_success'].format(value[1]),
@@ -310,6 +337,8 @@ def empty_query(query: types.InlineQuery):
     if res.get('errors', None):
         on_inline_not_registered(query)
         return
+
+    logging.debug('empty query from %s', u_id)
 
     internal_id = res['data']['telegramToUserId']
     res = graphql_request(api_url,
@@ -361,6 +390,7 @@ def answer_query(query: types.InlineQuery):
         num = matches.groups()[0]
         message = matches.groups()[1]
     except AttributeError:
+        logging.warning('wrong query \'%s\' from %s', query.query, u_id)
         return
 
     if not num or int(num) <= 0:
@@ -378,7 +408,10 @@ def answer_query(query: types.InlineQuery):
         on_integer_overflow(query)
         return
 
+    logging.info('successful query from %s', u_id)
+
     if num > money:
+        logging.debug('not enough money on account from %s', u_id)
         give = types.InlineQueryResultArticle(
             id='2',
             title=localization['inline_mode']['not_enough']['title'],
@@ -451,6 +484,8 @@ def answer_query(query: types.InlineQuery):
 
 
 def on_inline_not_registered(query: types.InlineQuery):
+    logging.debug('not registered query from %s', query.from_user.id)
+
     r = types.InlineQueryResultArticle(
         id='1',
         title=localization['inline_mode']['not_registered']['title'],
@@ -465,6 +500,8 @@ def on_inline_not_registered(query: types.InlineQuery):
 
 
 def on_callback_data_overflow(query: types.InlineQuery):
+    logging.debug('data overflow query from %s', query.from_user.id)
+
     r = types.InlineQueryResultArticle(
         id='1',
         title=localization['inline_mode']['message_overflow']['title'],
@@ -479,6 +516,8 @@ def on_callback_data_overflow(query: types.InlineQuery):
 
 
 def on_integer_overflow(query: types.InlineQuery):
+    logging.debug('integer overflow query from %s', query.from_user.id)
+
     r = types.InlineQueryResultArticle(
         id='1',
         title=localization['inline_mode']['integer_overflow']['title'],

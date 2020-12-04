@@ -10,14 +10,16 @@ from telebot import types
 
 from common import get_user_str, load_config, user_exists, yesno_keyboard
 from localization import localization
-from queries import profile, telegramToUserId, transactions, transfer
+from queries import profile, telegramToUserId, transfer
 from services import get_transactions, graphql_request
 
 load_config()
 localization = localization['en']
 
-bot = telebot.AsyncTeleBot(environ.get(
-    'TELEGRAM_API_TOKEN'), parse_mode='HTML')
+token = environ.get('TELEGRAM_API_TOKEN_DEV') if environ.get(
+    'ENVIRONMENT') == 'DEVELOPMENT' else environ.get('TELEGRAM_API_TOKEN')
+
+bot = telebot.AsyncTeleBot(token, parse_mode='HTML')
 
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)

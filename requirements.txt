@@ -9,5 +9,5 @@ chardet==3.0.4            # via requests
 idna==2.10                # via requests
 pytelegrambotapi==3.7.4   # via -r requirements.in
 python-dotenv==0.15.0     # via -r requirements.in
-requests==2.25.0          # via -r requirements.in, pytelegrambotapi
+requests==2.25.1          # via -r requirements.in, pytelegrambotapi
 urllib3==1.25.10          # via requests

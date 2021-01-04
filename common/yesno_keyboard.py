@@ -1,4 +1,4 @@
-from telebot import types
+from aiogram import types
 
 
 def yesno_keyboard(title, yes_text, no_text):

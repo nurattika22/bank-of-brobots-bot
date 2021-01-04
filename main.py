@@ -1,5 +1,6 @@
-from bot import bot
+from aiogram import executor
+from bot import dp
 import handlers
 
-if __name__ == '__main__':
-    bot.polling(none_stop=True)
+if __name__ == "__main__":
+    executor.start_polling(dp, skip_updates=True)

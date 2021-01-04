@@ -1,4 +1,4 @@
-from telebot import types
+from aiogram import types
 
 
 def get_user_str(user: types.User):

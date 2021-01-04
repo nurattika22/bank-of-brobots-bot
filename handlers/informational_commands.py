@@ -1,14 +1,14 @@
 import logging
 from os import environ
 
-from bot import bot, localization
+from bot import bot, dp, localization
 from queries import profile, telegramToUserId
 from services import get_transactions, graphql_request
-from telebot import types
+from aiogram import types
 
 
-@bot.message_handler(commands=['profile'])
-def on_profile(message: types.Message):
+@dp.message_handler(commands=['profile'])
+async def on_profile(message: types.Message):
     u_id = message.from_user.id
     api_url = environ.get('API_URL')
 
@@ -17,7 +17,7 @@ def on_profile(message: types.Message):
                           telegram_id=u_id)
 
     if res.get('errors', None):
-        bot.reply_to(message, localization['register_first'])
+        await message.reply(localization['register_first'])
         return
 
     internal_id = res['data']['telegramToUserId']
@@ -36,17 +36,17 @@ def on_profile(message: types.Message):
     if res['is_admin']:
         text_response += localization['profile_admin'].format(res['is_admin'])
 
-    bot.send_message(u_id, text_response)
+    await bot.send_message(u_id, text_response)
     logging.debug('/profile from %s', u_id)
 
 
-@bot.message_handler(commands=['transactions'])
-def on_transactions(message: types.Message):
+@dp.message_handler(commands=['transactions'])
+async def on_transactions(message: types.Message):
     u_id = message.from_user.id
     res = get_transactions(telegram_id=u_id)
 
     if not res:
-        bot.reply_to(message, localization['register_first'])
+        await message.reply(localization['register_first'])
         return
 
     text_response = localization['transaction_list_title']
@@ -72,17 +72,17 @@ def on_transactions(message: types.Message):
     if not len(res['transactions']):
         text_response += localization['empty_list']
 
-    bot.reply_to(message, text_response)
+    await message.reply(text_response)
     logging.debug('/transactions from %s', u_id)
 
 
-@bot.message_handler(commands=['stats'])
-def on_stats(message: types.Message):
+@dp.message_handler(commands=['stats'])
+async def on_stats(message: types.Message):
     u_id = str(message.from_user.id)
     res = get_transactions(telegram_id=u_id)
 
     if not res:
-        bot.reply_to(message, localization['register_first'])
+        await message.reply(localization['register_first'])
         return
 
     stats = {
@@ -104,5 +104,5 @@ def on_stats(message: types.Message):
             stats['income'] += t['money']
             stats['top_in'] = t['money'] if t['money'] > stats['top_in'] else stats['top_in']
 
-    bot.reply_to(message, localization['stats'].format(**stats))
+    await message.reply(localization['stats'].format(**stats))
     logging.debug('/stats from %s', u_id)

@@ -2,14 +2,14 @@ import logging
 import re
 from os import environ
 
-from bot import bot, localization
+from bot import bot, dp, localization
 from queries import profile, telegramToUserId
 from services import graphql_request
-from telebot import types
+from aiogram import types
 
 
-@bot.inline_handler(func=lambda query: len(query.query) == 0)
-def empty_query(query: types.InlineQuery):
+@dp.inline_handler(lambda query: len(query.query) == 0)
+async def empty_query(query: types.InlineQuery):
     u_id = query.from_user.id
     api_url = environ.get('API_URL')
 
@@ -46,12 +46,12 @@ def empty_query(query: types.InlineQuery):
         thumb_url=localization['inline_mode']['empty']['thumb_url']
     )
 
-    bot.answer_inline_query(
+    await bot.answer_inline_query(
         query.id, [balance, instructions], cache_time=environ.get('INLINE_QUERY_CACHE_TIME'))
 
 
-@bot.inline_handler(func=lambda query: len(query.query))
-def answer_query(query: types.InlineQuery):
+@dp.inline_handler(lambda query: len(query.query))
+async def answer_query(query: types.InlineQuery):
     u_id = query.from_user.id
     api_url = environ.get('API_URL')
 
@@ -162,11 +162,11 @@ def answer_query(query: types.InlineQuery):
         thumb_url=localization['inline_mode']['balance']['thumb_url']
     )
 
-    bot.answer_inline_query(
+    await bot.answer_inline_query(
         query.id, [balance, give, ask], cache_time=environ.get('INLINE_QUERY_CACHE_TIME'))
 
 
-def on_inline_not_registered(query: types.InlineQuery):
+async def on_inline_not_registered(query: types.InlineQuery):
     logging.debug('not registered query from %s', query.from_user.id)
 
     r = types.InlineQueryResultArticle(
@@ -178,11 +178,11 @@ def on_inline_not_registered(query: types.InlineQuery):
         thumb_url=localization['inline_mode']['not_registered']['thumb_url']
     )
 
-    bot.answer_inline_query(
+    await bot.answer_inline_query(
         query.id, [r], cache_time=environ.get('INLINE_QUERY_CACHE_TIME'))
 
 
-def on_callback_data_overflow(query: types.InlineQuery):
+async def on_callback_data_overflow(query: types.InlineQuery):
     logging.debug('data overflow query from %s', query.from_user.id)
 
     r = types.InlineQueryResultArticle(
@@ -194,11 +194,11 @@ def on_callback_data_overflow(query: types.InlineQuery):
         thumb_url=localization['inline_mode']['message_overflow']['thumb_url']
     )
 
-    bot.answer_inline_query(
+    await bot.answer_inline_query(
         query.id, [r], cache_time=environ.get('INLINE_QUERY_CACHE_TIME'))
 
 
-def on_integer_overflow(query: types.InlineQuery):
+async def on_integer_overflow(query: types.InlineQuery):
     logging.debug('integer overflow query from %s', query.from_user.id)
 
     r = types.InlineQueryResultArticle(
@@ -210,9 +210,5 @@ def on_integer_overflow(query: types.InlineQuery):
         thumb_url=localization['inline_mode']['integer_overflow']['thumb_url']
     )
 
-    bot.answer_inline_query(
+    await bot.answer_inline_query(
         query.id, [r], cache_time=environ.get('INLINE_QUERY_CACHE_TIME'))
-
-
-if __name__ == '__main__':
-    bot.polling(none_stop=True)
